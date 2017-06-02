@@ -55,25 +55,6 @@ int main(int argc, char *argv[])
 	if (retval == SOCKET_ERROR) err_quit("listen()");
 	/*----- IPv4 소켓 초기화 끝 -----*/
 
-	/*----- IPv6 소켓 초기화 시작 -----*/
-	// socket()
-	SOCKET listen_sockv6 = socket(AF_INET6, SOCK_STREAM, 0);
-	if (listen_sockv6 == INVALID_SOCKET) err_quit("socket()");
-
-	// bind()
-	SOCKADDR_IN6 serveraddrv6;
-	ZeroMemory(&serveraddrv6, sizeof(serveraddrv6));
-	serveraddrv6.sin6_family = AF_INET6;
-	serveraddrv6.sin6_addr = in6addr_any;
-	serveraddrv6.sin6_port = htons(SERVERPORT);
-	retval = bind(listen_sockv6, (SOCKADDR *)&serveraddrv6, sizeof(serveraddrv6));
-	if (retval == SOCKET_ERROR) err_quit("bind()");
-
-	// listen()
-	retval = listen(listen_sockv6, SOMAXCONN);
-	if (retval == SOCKET_ERROR) err_quit("listen()");
-	/*----- IPv6 소켓 초기화 끝 -----*/
-
 	// 데이터 통신에 사용할 변수(공통)
 	FD_SET rset;
 	SOCKET client_sock;
@@ -87,8 +68,7 @@ int main(int argc, char *argv[])
 		// 소켓 셋 초기화
 		FD_ZERO(&rset);
 		FD_SET(listen_sockv4, &rset);
-		FD_SET(listen_sockv6, &rset);
-		for (i = 0; i<nTotalSockets; i++) {
+		for (i = 0; i < nTotalSockets; i++) {
 			FD_SET(SocketInfoArray[i]->sock, &rset);
 		}
 
@@ -115,27 +95,9 @@ int main(int argc, char *argv[])
 				AddSocketInfo(client_sock, false);
 			}
 		}
-		if (FD_ISSET(listen_sockv6, &rset)) {
-			addrlen = sizeof(clientaddrv6);
-			client_sock = accept(listen_sockv6, (SOCKADDR *)&clientaddrv6, &addrlen);
-			if (client_sock == INVALID_SOCKET) {
-				err_display("accept()");
-				break;
-			}
-			else {
-				// 접속한 클라이언트 정보 출력
-				char ipaddr[50];
-				DWORD ipaddrlen = sizeof(ipaddr);
-				WSAAddressToString((SOCKADDR *)&clientaddrv6, sizeof(clientaddrv6),
-					NULL, ipaddr, &ipaddrlen);
-				printf("[TCPv6 서버] 클라이언트 접속: %s\n", ipaddr);
-				// 소켓 정보 추가
-				AddSocketInfo(client_sock, true);
-			}
-		}
 
 		// 소켓 셋 검사(2): 데이터 통신
-		for (i = 0; i<nTotalSockets; i++) {
+		for (i = 0; i < nTotalSockets; i++) {
 			SOCKETINFO *ptr = SocketInfoArray[i];
 			if (FD_ISSET(ptr->sock, &rset)) {
 				// 데이터 받기
@@ -154,7 +116,7 @@ int main(int argc, char *argv[])
 					ptr->recvbytes = 0;
 
 					// 현재 접속한 모든 클라이언트에게 데이터를 보냄!
-					for (j = 0; j<nTotalSockets; j++) {
+					for (j = 0; j < nTotalSockets; j++) {
 						SOCKETINFO *ptr2 = SocketInfoArray[j];
 						retval = send(ptr2->sock, ptr->buf, BUFSIZE, 0);
 						if (retval == SOCKET_ERROR) {
@@ -200,24 +162,12 @@ void RemoveSocketInfo(int nIndex)
 	SOCKETINFO *ptr = SocketInfoArray[nIndex];
 
 	// 종료한 클라이언트 정보 출력
-	if (ptr->isIPv6 == false) {
-		SOCKADDR_IN clientaddrv4;
-		int addrlen = sizeof(clientaddrv4);
-		getpeername(ptr->sock, (SOCKADDR *)&clientaddrv4, &addrlen);
-		printf("[TCPv4 서버] 클라이언트 종료: [%s]:%d\n",
-			inet_ntoa(clientaddrv4.sin_addr), ntohs(clientaddrv4.sin_port));
-	}
-	else {
-		SOCKADDR_IN6 clientaddrv6;
-		int addrlen = sizeof(clientaddrv6);
-		getpeername(ptr->sock, (SOCKADDR *)&clientaddrv6, &addrlen);
+	SOCKADDR_IN clientaddrv4;
+	int addrlen = sizeof(clientaddrv4);
+	getpeername(ptr->sock, (SOCKADDR *)&clientaddrv4, &addrlen);
+	printf("[TCPv4 서버] 클라이언트 종료: [%s]:%d\n",
+		inet_ntoa(clientaddrv4.sin_addr), ntohs(clientaddrv4.sin_port));
 
-		char ipaddr[50];
-		DWORD ipaddrlen = sizeof(ipaddr);
-		WSAAddressToString((SOCKADDR *)&clientaddrv6, sizeof(clientaddrv6),
-			NULL, ipaddr, &ipaddrlen);
-		printf("[TCPv6 서버] 클라이언트 종료: %s\n", ipaddr);
-	}
 
 	closesocket(ptr->sock);
 	delete ptr;
