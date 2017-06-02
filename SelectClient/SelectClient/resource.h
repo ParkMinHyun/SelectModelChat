@@ -9,6 +9,17 @@
 #define IDC_SENDMSG                     1005
 #define IDC_MSG                         1006
 #define IDC_STATUS                      1007
+#define IDC_IPCHECK                     1011
+#define IDC_PORTCHECK                   1012
+#define IDC_Name                        1013
+#define IDC_ROOM1                       1014
+#define IDC_ROOM2                       1015
+#define IDC_ROOM1NAME                   1016
+#define IDC_ROOM2NAME                   1017
+#define IDC_ROOM1NAMES                  1018
+#define IDC_ROOM2NAMES                  1019
+#define IDC_ROOM1NAMESSHOW              1020
+#define IDC_ROOM2NAMESSHOW              1021
 
 // Next default values for new objects
 // 
@@ -16,7 +27,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        103
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1011
+#define _APS_NEXT_CONTROL_VALUE         1022
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
