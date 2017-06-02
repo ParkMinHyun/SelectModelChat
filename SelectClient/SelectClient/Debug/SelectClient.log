@@ -1,4 +1,7 @@
-﻿  건너뛰고 있습니다... (관련된 변경 내용 없음)
-  Client.cpp
+﻿  Client.cpp
+c:\users\parkminhyun\documents\selectmodelchat\selectclient\selectclient\client.cpp(60): warning C4996: 'vsprintf': This function or variable may be unsafe. Consider using vsprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.15063.0\ucrt\stdio.h(1467): note: 'vsprintf' 선언을 참조하십시오.
+c:\users\parkminhyun\documents\selectmodelchat\selectclient\selectclient\client.cpp(252): warning C4996: 'inet_addr': Use inet_pton() or InetPton() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+  c:\program files (x86)\windows kits\10\include\10.0.15063.0\um\winsock2.h(1830): note: 'inet_addr' 선언을 참조하십시오.
   SelectClient.vcxproj -> C:\Users\ParkMinHyun\Documents\SelectModelChat\SelectClient\Debug\SelectClient.exe
   SelectClient.vcxproj -> C:\Users\ParkMinHyun\Documents\SelectModelChat\SelectClient\Debug\SelectClient.pdb (Partial PDB)

@@ -7,15 +7,10 @@
 #include "resource.h"
 
 #define SERVERIPV4  "127.0.0.1"
-#define SERVERIPV6  "::1"
 #define SERVERPORT  9000
-
 #define BUFSIZE     256                    // 전송 메시지 전체 크기
 #define MSGSIZE     (BUFSIZE-sizeof(int))  // 채팅 메시지 최대 길이
-
 #define CHATTING    1000                   // 메시지 타입: 채팅
-
-#define WM_DRAWIT   (WM_USER+1)            // 사용자 정의 윈도우 메시지
 
 // 공통 메시지 형식
 // sizeof(COMM_MSG) == 256
@@ -35,7 +30,6 @@ struct CHAT_MSG
 
 
 static HINSTANCE     g_hInst; // 응용 프로그램 인스턴스 핸들
-static HWND          g_hDrawWnd; // 그림을 그릴 윈도우
 static HWND          g_hButtonSendMsg; // '메시지 전송' 버튼
 static HWND          g_hEditStatus; // 받은 메시지 출력
 static char          g_ipaddr[64]; // 서버 IP 주소
@@ -54,13 +48,68 @@ DWORD WINAPI ReadThread(LPVOID arg);
 DWORD WINAPI WriteThread(LPVOID arg);
 // 자식 윈도우 프로시저
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-// 편집 컨트롤 출력 함수
-void DisplayText(char *fmt, ...);
+
+#pragma region EtcFunc
+// 에디트 컨트롤에 문자열 출력
+void DisplayText(char *fmt, ...)
+{
+	va_list arg;
+	va_start(arg, fmt);
+
+	char cbuf[1024];
+	vsprintf(cbuf, fmt, arg);
+
+	int nLength = GetWindowTextLength(g_hEditStatus);
+	SendMessage(g_hEditStatus, EM_SETSEL, nLength, nLength);
+	SendMessage(g_hEditStatus, EM_REPLACESEL, FALSE, (LPARAM)cbuf);
+
+	va_end(arg);
+}
 // 사용자 정의 데이터 수신 함수
-int recvn(SOCKET s, char *buf, int len, int flags);
-// 오류 출력 함수
-void err_quit(char *msg);
-void err_display(char *msg);
+int recvn(SOCKET s, char *buf, int len, int flags)
+{
+	int received;
+	char *ptr = buf;
+	int left = len;
+
+	while (left > 0) {
+		received = recv(s, ptr, left, flags);
+		if (received == SOCKET_ERROR)
+			return SOCKET_ERROR;
+		else if (received == 0)
+			break;
+		left -= received;
+		ptr += received;
+	}
+
+	return (len - left);
+}
+// 소켓 함수 오류 출력 후 종료
+void err_quit(char *msg)
+{
+	LPVOID lpMsgBuf;
+	FormatMessage(
+		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+		NULL, WSAGetLastError(),
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		(LPTSTR)&lpMsgBuf, 0, NULL);
+	MessageBox(NULL, (LPCTSTR)lpMsgBuf, msg, MB_ICONERROR);
+	LocalFree(lpMsgBuf);
+	exit(1);
+}
+// 소켓 함수 오류 출력
+void err_display(char *msg)
+{
+	LPVOID lpMsgBuf;
+	FormatMessage(
+		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+		NULL, WSAGetLastError(),
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		(LPTSTR)&lpMsgBuf, 0, NULL);
+	printf("[%s] %s", msg, (char *)lpMsgBuf);
+	LocalFree(lpMsgBuf);
+}
+#pragma endregion
 
 // 메인 함수
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
@@ -95,24 +144,26 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 // 대화상자 프로시저
 BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	static HWND hButtonIsIPv6;
 	static HWND hEditIPaddr;
 	static HWND hEditPort;
 	static HWND hButtonConnect;
 	static HWND hEditMsg;
-	static HWND hColorRed;
-	static HWND hColorGreen;
+	static HWND hRoom1RadioBtn;
+	static HWND hRoom2RadioBtn;
 	static HWND hColorBlue;
 
 	switch (uMsg) {
 	case WM_INITDIALOG:
-		// 컨트롤 핸들 얻기
+#pragma region getTheControlHandle
 		hEditIPaddr = GetDlgItem(hDlg, IDC_IPADDR);
 		hEditPort = GetDlgItem(hDlg, IDC_PORT);
+		hRoom1RadioBtn = GetDlgItem(hDlg, IDC_ROOM1);
+		hRoom2RadioBtn = GetDlgItem(hDlg, IDC_ROOM2);
 		hButtonConnect = GetDlgItem(hDlg, IDC_CONNECT);
-		g_hButtonSendMsg = GetDlgItem(hDlg, IDC_SENDMSG);
 		hEditMsg = GetDlgItem(hDlg, IDC_MSG);
+		g_hButtonSendMsg = GetDlgItem(hDlg, IDC_SENDMSG);
 		g_hEditStatus = GetDlgItem(hDlg, IDC_STATUS);
+#pragma endregion
 
 		// 컨트롤 초기화
 		SendMessage(hEditMsg, EM_SETLIMITTEXT, MSGSIZE, 0);
@@ -124,6 +175,12 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
+
+		case IDC_ROOM1:
+			return TRUE;
+
+		case IDC_ROOM2:
+			return TRUE;
 
 		case IDC_CONNECT:
 			GetDlgItemText(hDlg, IDC_IPADDR, g_ipaddr, sizeof(g_ipaddr));
@@ -139,7 +196,8 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			else {
 				EnableWindow(hButtonConnect, FALSE);
 				while (g_bStart == FALSE); // 서버 접속 성공 기다림
-				EnableWindow(hButtonIsIPv6, FALSE);
+				EnableWindow(hRoom1RadioBtn, FALSE);
+				EnableWindow(hRoom2RadioBtn, FALSE);
 				EnableWindow(hEditIPaddr, FALSE);
 				EnableWindow(hEditPort, FALSE);
 				EnableWindow(g_hButtonSendMsg, TRUE);
@@ -156,6 +214,8 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			// 입력된 텍스트 전체를 선택 표시
 			SendMessage(hEditMsg, EM_SETSEL, 0, -1);
 			return TRUE;
+
+
 
 		case IDCANCEL:
 			/*if (MessageBox(hDlg, "정말로 종료하시겠습니까?",
@@ -280,67 +340,4 @@ DWORD WINAPI WriteThread(LPVOID arg)
 	}
 
 	return 0;
-}
-
-// 에디트 컨트롤에 문자열 출력
-void DisplayText(char *fmt, ...)
-{
-	va_list arg;
-	va_start(arg, fmt);
-
-	char cbuf[1024];
-	vsprintf(cbuf, fmt, arg);
-
-	int nLength = GetWindowTextLength(g_hEditStatus);
-	SendMessage(g_hEditStatus, EM_SETSEL, nLength, nLength);
-	SendMessage(g_hEditStatus, EM_REPLACESEL, FALSE, (LPARAM)cbuf);
-
-	va_end(arg);
-}
-
-// 사용자 정의 데이터 수신 함수
-int recvn(SOCKET s, char *buf, int len, int flags)
-{
-	int received;
-	char *ptr = buf;
-	int left = len;
-
-	while (left > 0) {
-		received = recv(s, ptr, left, flags);
-		if (received == SOCKET_ERROR)
-			return SOCKET_ERROR;
-		else if (received == 0)
-			break;
-		left -= received;
-		ptr += received;
-	}
-
-	return (len - left);
-}
-
-// 소켓 함수 오류 출력 후 종료
-void err_quit(char *msg)
-{
-	LPVOID lpMsgBuf;
-	FormatMessage(
-		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-		NULL, WSAGetLastError(),
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		(LPTSTR)&lpMsgBuf, 0, NULL);
-	MessageBox(NULL, (LPCTSTR)lpMsgBuf, msg, MB_ICONERROR);
-	LocalFree(lpMsgBuf);
-	exit(1);
-}
-
-// 소켓 함수 오류 출력
-void err_display(char *msg)
-{
-	LPVOID lpMsgBuf;
-	FormatMessage(
-		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-		NULL, WSAGetLastError(),
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		(LPTSTR)&lpMsgBuf, 0, NULL);
-	printf("[%s] %s", msg, (char *)lpMsgBuf);
-	LocalFree(lpMsgBuf);
 }

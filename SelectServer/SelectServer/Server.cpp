@@ -7,21 +7,24 @@
 
 #define SERVERPORT 9000
 #define BUFSIZE    256
+#define NAMESIZE   20
+
 
 // 소켓 정보 저장을 위한 구조체와 변수
 struct SOCKETINFO
 {
 	SOCKET sock;
-	bool   isIPv6;
 	char   buf[BUFSIZE];
 	int    recvbytes;
+	int	   room;
+	char   name[NAMESIZE];
 };
 
 int nTotalSockets = 0;
 SOCKETINFO *SocketInfoArray[FD_SETSIZE];
 
 // 소켓 관리 함수
-BOOL AddSocketInfo(SOCKET sock, bool isIPv6);
+BOOL AddSocketInfo(SOCKET sock);
 void RemoveSocketInfo(int nIndex);
 
 // 오류 출력 함수
@@ -116,7 +119,7 @@ int main(int argc, char *argv[])
 				printf("[TCPv4 서버] 클라이언트 접속: [%s]:%d\n",
 					inet_ntoa(clientaddrv4.sin_addr), ntohs(clientaddrv4.sin_port));
 				// 소켓 정보 추가
-				AddSocketInfo(client_sock, false);
+				AddSocketInfo(client_sock);
 			}
 		}
 
@@ -159,7 +162,7 @@ int main(int argc, char *argv[])
 }
 
 // 소켓 정보 추가
-BOOL AddSocketInfo(SOCKET sock, bool isIPv6)
+BOOL AddSocketInfo(SOCKET sock)
 {
 	if (nTotalSockets >= FD_SETSIZE) {
 		printf("[오류] 소켓 정보를 추가할 수 없습니다!\n");
@@ -173,7 +176,6 @@ BOOL AddSocketInfo(SOCKET sock, bool isIPv6)
 	}
 
 	ptr->sock = sock;
-	ptr->isIPv6 = isIPv6;
 	ptr->recvbytes = 0;
 	SocketInfoArray[nTotalSockets++] = ptr;
 
