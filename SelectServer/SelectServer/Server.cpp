@@ -11,6 +11,16 @@
 #define ROOMCHECK  64
 #define ROOM1      49
 #define ROOM2      50
+#define CHATTING    1000                   // 메시지 타입: 채팅
+#define MSGSIZE     (BUFSIZE-sizeof(int))  // 채팅 메시지 최대 길이
+
+// 공통 메시지 형식
+// sizeof(COMM_MSG) == 256
+struct CHAT_MSG
+{
+	int  type;
+	char buf[MSGSIZE];
+};
 
 // 소켓 정보 저장을 위한 구조체와 변수
 struct SOCKETINFO
@@ -24,6 +34,8 @@ struct SOCKETINFO
 
 int nTotalSockets = 0;
 bool loginCheck = false;
+static CHAT_MSG      g_chatmsg; // 채팅 메시지 저장
+
 SOCKETINFO *SocketInfoArray[FD_SETSIZE];
 
 // 소켓 관리 함수
@@ -61,7 +73,8 @@ void err_display(char *msg)
 int main(int argc, char *argv[])
 {
 	int retval;
-
+	// 변수 초기화(일부)
+	g_chatmsg.type = CHATTING;
 	// 윈속 초기화
 	WSADATA wsa;
 	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) return 1;
@@ -159,20 +172,22 @@ int main(int argc, char *argv[])
 						ptr->room = 2;
 
 					strcpy(ptr->name, splitBuf[1]);
-					//sprintf(ptr->buf, "닉네임 %s님이 채팅방%d에 %s", ptr->name, ptr->room, "접속하셨습니다!");
 				}
 
 				if (ptr->recvbytes == BUFSIZE) {
 					// 받은 바이트 수 리셋
-					ptr->recvbytes = 0;
+					ptr->recvbytes = 0;	
 
 					// 현재 접속한 모든 클라이언트에게 데이터를 보냄!
 					for (j = 0; j < nTotalSockets; j++) {
 						SOCKETINFO *ptr2 = SocketInfoArray[j];
 						// 방이 같은 경우에만 데이타 전송
 						if (ptr->room == ptr2->room) {
-							retval = send(ptr2->sock, ptr->buf, BUFSIZE, 0);
-
+							sprintf(g_chatmsg.buf, "닉네임 %s님이 채팅방%d에 %s", ptr->name, ptr->room, "접속하셨습니다!");
+							// 데이터 보내기
+							retval = send(ptr2->sock, (char *)&g_chatmsg, BUFSIZE, 0);
+							//retval = send(ptr2->sock, ptr->buf, BUFSIZE, 0);
+							
 							if (retval == SOCKET_ERROR) {
 								err_display("send()");
 								RemoveSocketInfo(j);
