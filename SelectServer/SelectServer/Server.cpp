@@ -123,6 +123,7 @@ int main(int argc, char *argv[])
 			}
 		}
 
+		char tempBuf[BUFSIZE + 1];
 		// 소켓 셋 검사(2): 데이터 통신
 		for (i = 0; i < nTotalSockets; i++) {
 			SOCKETINFO *ptr = SocketInfoArray[i];
@@ -137,17 +138,19 @@ int main(int argc, char *argv[])
 
 				// 받은 바이트 수 누적
 				ptr->recvbytes += retval;
+				strncpy(tempBuf, ptr->buf + 4, NAMESIZE + 3);
 
 				// room 초기화
-				if (ptr->buf[5] == ROOMCHECK)
+				if (tempBuf[1] == ROOMCHECK)
 				{
-					if (ptr->buf[4] == ROOM1) {
+					if (tempBuf[0] == ROOM1) {
 						ptr->room = 1;
 					}
-					else if(ptr->buf[4] == ROOM2){
+					else if(tempBuf[0] == ROOM2){
 						ptr->room = 2;
 					}
 				}
+
 
 				if (ptr->recvbytes == BUFSIZE) {
 					// 받은 바이트 수 리셋
