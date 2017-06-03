@@ -44,7 +44,7 @@ static CHAT_MSG      g_chatmsg; // 채팅 메시지 저장
 static bool room1 = false;
 static bool room2 = false;
 char name[NAMESIZE];
-								  // 대화상자 프로시저
+// 대화상자 프로시저
 BOOL CALLBACK DlgProc(HWND, UINT, WPARAM, LPARAM);
 // 소켓 통신 스레드 함수
 DWORD WINAPI ClientMain(LPVOID arg);
@@ -200,7 +200,7 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			// name 입력 안했으면 return
 			GetDlgItemText(hDlg, IDC_Name, name, NAMESIZE + 1);
-			if (strlen(name)==0)
+			if (strlen(name) == 0)
 				return true;
 
 			GetDlgItemText(hDlg, IDC_IPADDR, g_ipaddr, sizeof(g_ipaddr));
@@ -290,22 +290,26 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	// 읽기 완료를 기다림
 	WaitForSingleObject(g_hReadEvent, INFINITE);
 	char loginStatusSend[BUFSIZE];
-	strcpy(loginStatusSend, "1@");
-	strcat(loginStatusSend, name);
+	
 	if (room1 == true)
-		sprintf(g_chatmsg.buf, loginStatusSend);
+		strcpy(loginStatusSend, "1@");
 	else
-		sprintf(g_chatmsg.buf, loginStatusSend);
+		strcpy(loginStatusSend, "2@");
+
+	strcat(loginStatusSend, name);
+	sprintf(g_chatmsg.buf, loginStatusSend);
 	// 쓰기 완료를 알림
 	SetEvent(g_hWriteEvent);
 
 	// 스레드 종료 대기
 	retval = WaitForMultipleObjects(2, hThread, FALSE, INFINITE);
 	retval -= WAIT_OBJECT_0;
+
 	if (retval == 0)
 		TerminateThread(hThread[1], 1);
 	else
 		TerminateThread(hThread[0], 1);
+
 	CloseHandle(hThread[0]);
 	CloseHandle(hThread[1]);
 
@@ -336,7 +340,6 @@ DWORD WINAPI ReadThread(LPVOID arg)
 			DisplayText("[받은 메시지] %s\r\n", chat_msg->buf);
 		}
 	}
-
 	return 0;
 }
 

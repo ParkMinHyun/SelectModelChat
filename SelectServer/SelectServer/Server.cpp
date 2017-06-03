@@ -23,14 +23,14 @@ struct SOCKETINFO
 };
 
 int nTotalSockets = 0;
+bool loginCheck = false;
 SOCKETINFO *SocketInfoArray[FD_SETSIZE];
 
 // 소켓 관리 함수
 BOOL AddSocketInfo(SOCKET sock);
 void RemoveSocketInfo(int nIndex);
 
-// 오류 출력 함수
-
+#pragma region ErrorFunc
 // 소켓 함수 오류 출력 후 종료
 void err_quit(char *msg)
 {
@@ -56,6 +56,7 @@ void err_display(char *msg)
 	printf("[%s] %s", msg, (char *)lpMsgBuf);
 	LocalFree(lpMsgBuf);
 }
+#pragma endregion
 
 int main(int argc, char *argv[])
 {
@@ -124,6 +125,8 @@ int main(int argc, char *argv[])
 		}
 
 		char tempBuf[BUFSIZE + 1];
+		char *splitBuf[2] = { NULL };
+
 		// 소켓 셋 검사(2): 데이터 통신
 		for (i = 0; i < nTotalSockets; i++) {
 			SOCKETINFO *ptr = SocketInfoArray[i];
@@ -138,19 +141,26 @@ int main(int argc, char *argv[])
 
 				// 받은 바이트 수 누적
 				ptr->recvbytes += retval;
-				strncpy(tempBuf, ptr->buf + 4, NAMESIZE + 3);
 
-				// room 초기화
+				// Login일 경우 판별하기 위해 tempBuf에 User초기화 내용 저장(Room,Name)
+				strncpy(tempBuf, ptr->buf + 4, NAMESIZE + 3);
+				// room 초기화 
 				if (tempBuf[1] == ROOMCHECK)
 				{
-					if (tempBuf[0] == ROOM1) {
-						ptr->room = 1;
+					char *splitChar = strtok(tempBuf, "@");
+					for (int i = 0; i < 2; i++) {
+						splitBuf[i] = splitChar;
+						splitChar = strtok(NULL, "@");
 					}
-					else if(tempBuf[0] == ROOM2){
-						ptr->room = 2;
-					}
-				}
 
+					if (tempBuf[0] == ROOM1)
+						ptr->room = 1;
+					else if (tempBuf[0] == ROOM2)
+						ptr->room = 2;
+
+					strcpy(ptr->name, splitBuf[1]);
+					//sprintf(ptr->buf, "닉네임 %s님이 채팅방%d에 %s", ptr->name, ptr->room, "접속하셨습니다!");
+				}
 
 				if (ptr->recvbytes == BUFSIZE) {
 					// 받은 바이트 수 리셋
@@ -162,6 +172,7 @@ int main(int argc, char *argv[])
 						// 방이 같은 경우에만 데이타 전송
 						if (ptr->room == ptr2->room) {
 							retval = send(ptr2->sock, ptr->buf, BUFSIZE, 0);
+
 							if (retval == SOCKET_ERROR) {
 								err_display("send()");
 								RemoveSocketInfo(j);
