@@ -8,7 +8,9 @@
 #define SERVERPORT 9000
 #define BUFSIZE    256
 #define NAMESIZE   20
-
+#define ROOMCHECK  64
+#define ROOM1      49
+#define ROOM2      50
 
 // 소켓 정보 저장을 위한 구조체와 변수
 struct SOCKETINFO
@@ -88,8 +90,6 @@ int main(int argc, char *argv[])
 	int addrlen, i, j;
 	// 데이터 통신에 사용할 변수(IPv4)
 	SOCKADDR_IN clientaddrv4;
-	// 데이터 통신에 사용할 변수(IPv6)
-	SOCKADDR_IN6 clientaddrv6;
 
 	while (1) {
 		// 소켓 셋 초기화
@@ -138,6 +138,17 @@ int main(int argc, char *argv[])
 				// 받은 바이트 수 누적
 				ptr->recvbytes += retval;
 
+				// room 초기화
+				if (ptr->buf[5] == ROOMCHECK)
+				{
+					if (ptr->buf[4] == ROOM1) {
+						ptr->room = 1;
+					}
+					else if(ptr->buf[4] == ROOM2){
+						ptr->room = 2;
+					}
+				}
+
 				if (ptr->recvbytes == BUFSIZE) {
 					// 받은 바이트 수 리셋
 					ptr->recvbytes = 0;
@@ -145,12 +156,14 @@ int main(int argc, char *argv[])
 					// 현재 접속한 모든 클라이언트에게 데이터를 보냄!
 					for (j = 0; j < nTotalSockets; j++) {
 						SOCKETINFO *ptr2 = SocketInfoArray[j];
-						retval = send(ptr2->sock, ptr->buf, BUFSIZE, 0);
-						if (retval == SOCKET_ERROR) {
-							err_display("send()");
-							RemoveSocketInfo(j);
-							--j; // 루프 인덱스 보정
-							continue;
+						if (ptr->room == ptr2->room) {
+							retval = send(ptr2->sock, ptr->buf, BUFSIZE, 0);
+							if (retval == SOCKET_ERROR) {
+								err_display("send()");
+								RemoveSocketInfo(j);
+								--j; // 루프 인덱스 보정
+								continue;
+							}
 						}
 					}
 				}
@@ -193,7 +206,6 @@ void RemoveSocketInfo(int nIndex)
 	getpeername(ptr->sock, (SOCKADDR *)&clientaddrv4, &addrlen);
 	printf("[TCPv4 서버] 클라이언트 종료: [%s]:%d\n",
 		inet_ntoa(clientaddrv4.sin_addr), ntohs(clientaddrv4.sin_port));
-
 
 	closesocket(ptr->sock);
 	delete ptr;

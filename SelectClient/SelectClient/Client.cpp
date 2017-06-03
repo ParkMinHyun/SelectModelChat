@@ -11,6 +11,7 @@
 #define BUFSIZE     256                    // 전송 메시지 전체 크기
 #define MSGSIZE     (BUFSIZE-sizeof(int))  // 채팅 메시지 최대 길이
 #define CHATTING    1000                   // 메시지 타입: 채팅
+#define NAMESIZE    20
 
 // 공통 메시지 형식
 // sizeof(COMM_MSG) == 256
@@ -28,7 +29,7 @@ struct CHAT_MSG
 	char buf[MSGSIZE];
 };
 
-
+static HWND          g_hDlg;
 static HINSTANCE     g_hInst; // 응용 프로그램 인스턴스 핸들
 static HWND          g_hButtonSendMsg; // '메시지 전송' 버튼
 static HWND          g_hEditStatus; // 받은 메시지 출력
@@ -40,6 +41,9 @@ static SOCKET        g_sock; // 클라이언트 소켓
 static HANDLE        g_hReadEvent, g_hWriteEvent; // 이벤트 핸들
 static CHAT_MSG      g_chatmsg; // 채팅 메시지 저장
 
+static bool room1 = false;
+static bool room2 = false;
+char name[NAMESIZE];
 								  // 대화상자 프로시저
 BOOL CALLBACK DlgProc(HWND, UINT, WPARAM, LPARAM);
 // 소켓 통신 스레드 함수
@@ -155,6 +159,7 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	switch (uMsg) {
 	case WM_INITDIALOG:
 #pragma region getTheControlHandle
+		g_hDlg = hDlg;
 		hEditIPaddr = GetDlgItem(hDlg, IDC_IPADDR);
 		hEditPort = GetDlgItem(hDlg, IDC_PORT);
 		hRoom1RadioBtn = GetDlgItem(hDlg, IDC_ROOM1);
@@ -177,12 +182,19 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		switch (LOWORD(wParam)) {
 
 		case IDC_ROOM1:
+			room1 = true;
+			room2 = false;
 			return TRUE;
 
 		case IDC_ROOM2:
+			room1 = false;
+			room2 = true;
 			return TRUE;
 
 		case IDC_CONNECT:
+			if (room1 == false && room2 == false)
+				return true;
+
 			GetDlgItemText(hDlg, IDC_IPADDR, g_ipaddr, sizeof(g_ipaddr));
 			g_port = GetDlgItemInt(hDlg, IDC_PORT, NULL, FALSE);
 
@@ -240,19 +252,19 @@ DWORD WINAPI ClientMain(LPVOID arg)
 {
 	int retval;
 
-		// socket()
-		g_sock = socket(AF_INET, SOCK_STREAM, 0);
-		if (g_sock == INVALID_SOCKET) err_quit("socket()");
+	// socket()
+	g_sock = socket(AF_INET, SOCK_STREAM, 0);
+	if (g_sock == INVALID_SOCKET) err_quit("socket()");
 
-		// connect()
-		SOCKADDR_IN serveraddr;
-		ZeroMemory(&serveraddr, sizeof(serveraddr));
-		serveraddr.sin_family = AF_INET;
-		serveraddr.sin_addr.s_addr = inet_addr(g_ipaddr);
-		serveraddr.sin_port = htons(g_port);
-		retval = connect(g_sock, (SOCKADDR *)&serveraddr, sizeof(serveraddr));
-		if (retval == SOCKET_ERROR) err_quit("connect()");
-	MessageBox(NULL, "서버에 접속했습니다.", "성공!", MB_ICONINFORMATION);
+	// connect()
+	SOCKADDR_IN serveraddr;
+	ZeroMemory(&serveraddr, sizeof(serveraddr));
+	serveraddr.sin_family = AF_INET;
+	serveraddr.sin_addr.s_addr = inet_addr(g_ipaddr);
+	serveraddr.sin_port = htons(g_port);
+	retval = connect(g_sock, (SOCKADDR *)&serveraddr, sizeof(serveraddr));
+	if (retval == SOCKET_ERROR) err_quit("connect()");
+	//MessageBox(NULL, "서버에 접속했습니다.", "성공!", MB_ICONINFORMATION);
 
 	// 읽기 & 쓰기 스레드 생성
 	HANDLE hThread[2];
@@ -267,6 +279,15 @@ DWORD WINAPI ClientMain(LPVOID arg)
 
 	g_bStart = TRUE;
 
+	// 읽기 완료를 기다림
+	WaitForSingleObject(g_hReadEvent, INFINITE);
+	if (room1 == true)
+		sprintf(g_chatmsg.buf, "1@");
+	else
+		sprintf(g_chatmsg.buf, "2@");
+	// 쓰기 완료를 알림
+	SetEvent(g_hWriteEvent);
+
 	// 스레드 종료 대기
 	retval = WaitForMultipleObjects(2, hThread, FALSE, INFINITE);
 	retval -= WAIT_OBJECT_0;
@@ -279,7 +300,7 @@ DWORD WINAPI ClientMain(LPVOID arg)
 
 	g_bStart = FALSE;
 
-	MessageBox(NULL, "서버가 접속을 끊었습니다", "알림", MB_ICONINFORMATION);
+	//MessageBox(NULL, "서버가 접속을 끊었습니다", "알림", MB_ICONINFORMATION);
 	EnableWindow(g_hButtonSendMsg, FALSE);
 
 	closesocket(g_sock);
