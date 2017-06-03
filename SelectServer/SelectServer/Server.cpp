@@ -32,10 +32,9 @@ struct SOCKETINFO
 	char   name[NAMESIZE];
 };
 
-int nTotalSockets = 0;
 bool loginCheck = false;
+int nTotalSockets = 0;
 static CHAT_MSG      g_chatmsg; // 채팅 메시지 저장
-
 SOCKETINFO *SocketInfoArray[FD_SETSIZE];
 
 // 소켓 관리 함수
@@ -176,18 +175,21 @@ int main(int argc, char *argv[])
 
 				if (ptr->recvbytes == BUFSIZE) {
 					// 받은 바이트 수 리셋
-					ptr->recvbytes = 0;	
+					ptr->recvbytes = 0;
 
 					// 현재 접속한 모든 클라이언트에게 데이터를 보냄!
 					for (j = 0; j < nTotalSockets; j++) {
 						SOCKETINFO *ptr2 = SocketInfoArray[j];
 						// 방이 같은 경우에만 데이타 전송
 						if (ptr->room == ptr2->room) {
-							sprintf(g_chatmsg.buf, "닉네임 %s님이 채팅방%d에 %s", ptr->name, ptr->room, "접속하셨습니다!");
-							// 데이터 보내기
-							retval = send(ptr2->sock, (char *)&g_chatmsg, BUFSIZE, 0);
-							//retval = send(ptr2->sock, ptr->buf, BUFSIZE, 0);
-							
+							if (loginCheck == true) {
+								// 데이터 보내기
+								sprintf(g_chatmsg.buf, "닉네임 %s님이 채팅방%d에 %s", ptr->name, ptr->room, "접속하셨습니다!");
+								retval = send(ptr2->sock, (char *)&g_chatmsg, BUFSIZE, 0);
+							}
+							else
+								retval = send(ptr2->sock, ptr->buf, BUFSIZE, 0);
+
 							if (retval == SOCKET_ERROR) {
 								err_display("send()");
 								RemoveSocketInfo(j);
@@ -196,6 +198,7 @@ int main(int argc, char *argv[])
 							}
 						}
 					}
+					loginCheck = false;
 				}
 			}
 		}
@@ -221,6 +224,8 @@ BOOL AddSocketInfo(SOCKET sock)
 	ptr->sock = sock;
 	ptr->recvbytes = 0;
 	SocketInfoArray[nTotalSockets++] = ptr;
+	loginCheck = true;
+
 
 	return TRUE;
 }
