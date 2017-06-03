@@ -13,7 +13,7 @@
 #define ROOM2      50
 #define CHATTING    1000                   // 메시지 타입: 채팅
 #define MSGSIZE     (BUFSIZE-sizeof(int))  // 채팅 메시지 최대 길이
-
+#define SHOWUSERS  "#!ShowUser"
 // 공통 메시지 형식
 // sizeof(COMM_MSG) == 256
 struct CHAT_MSG
@@ -33,6 +33,7 @@ struct SOCKETINFO
 };
 
 bool loginCheck = false;
+bool showUsersCheck = false;
 int nTotalSockets = 0;
 static CHAT_MSG      g_chatmsg; // 채팅 메시지 저장
 SOCKETINFO *SocketInfoArray[FD_SETSIZE];
@@ -172,6 +173,11 @@ int main(int argc, char *argv[])
 
 					strcpy(ptr->name, splitBuf[1]);
 				}
+				else if (!strcmp(tempBuf, SHOWUSERS))
+				{
+					sprintf(g_chatmsg.buf, "현재 접속한 User입니다.\n");
+					showUsersCheck = true;
+				}
 
 				if (ptr->recvbytes == BUFSIZE) {
 					// 받은 바이트 수 리셋
@@ -180,14 +186,23 @@ int main(int argc, char *argv[])
 					// 현재 접속한 모든 클라이언트에게 데이터를 보냄!
 					for (j = 0; j < nTotalSockets; j++) {
 						SOCKETINFO *ptr2 = SocketInfoArray[j];
+
+						if (showUsersCheck == true) {
+							sprintf(g_chatmsg.buf, "%s %s", g_chatmsg.buf, ptr2->name);
+							if (j == nTotalSockets - 1){
+								retval = send(ptr2->sock, (char *)&g_chatmsg, BUFSIZE, 0);
+							}
+							continue;
+						}
+
 						// 방이 같은 경우에만 데이타 전송
-						if (ptr->room == ptr2->room) {
+						else if (ptr->room == ptr2->room) {
 							// Client가 처음 채팅방에 접속한 경우
 							if (loginCheck == true) {
 								sprintf(g_chatmsg.buf, "닉네임 %s님이 채팅방%d에 %s", ptr->name, ptr->room, "접속하셨습니다!");
 								retval = send(ptr2->sock, (char *)&g_chatmsg, BUFSIZE, 0);
 							}
-							else{
+							else {
 								sprintf(g_chatmsg.buf, "%s : %s", ptr->name, tempBuf);
 								retval = send(ptr2->sock, (char *)&g_chatmsg, BUFSIZE, 0);
 							}
@@ -200,6 +215,7 @@ int main(int argc, char *argv[])
 						}
 					}
 					loginCheck = false;
+					showUsersCheck = false;
 				}
 			}
 		}

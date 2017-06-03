@@ -155,7 +155,7 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	static HWND hEditMsg;
 	static HWND hRoom1RadioBtn;
 	static HWND hRoom2RadioBtn;
-	static HWND hColorBlue;
+	static HWND hShowUserBtn;
 
 	switch (uMsg) {
 	case WM_INITDIALOG:
@@ -164,6 +164,7 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		hEditIPaddr = GetDlgItem(hDlg, IDC_IPADDR);
 		hEditPort = GetDlgItem(hDlg, IDC_PORT);
 		hName = GetDlgItem(hDlg, IDC_Name);
+		hShowUserBtn = GetDlgItem(hDlg, IDC_SHOWUSER);
 		hRoom1RadioBtn = GetDlgItem(hDlg, IDC_ROOM1);
 		hRoom2RadioBtn = GetDlgItem(hDlg, IDC_ROOM2);
 		hButtonConnect = GetDlgItem(hDlg, IDC_CONNECT);
@@ -235,7 +236,13 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			SendMessage(hEditMsg, EM_SETSEL, 0, -1);
 			return TRUE;
 
-
+		case IDC_SHOWUSER:
+			// 읽기 완료를 기다림
+			WaitForSingleObject(g_hReadEvent, INFINITE);
+			sprintf(g_chatmsg.buf, "#!ShowUser");
+			// 쓰기 완료를 알림
+			SetEvent(g_hWriteEvent);
+			return true;
 
 		case IDCANCEL:
 			/*if (MessageBox(hDlg, "정말로 종료하시겠습니까?",
