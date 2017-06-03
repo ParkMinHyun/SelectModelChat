@@ -287,10 +287,11 @@ DWORD WINAPI ClientMain(LPVOID arg)
 
 	g_bStart = TRUE;
 
+#pragma region Login
 	// 읽기 완료를 기다림
 	WaitForSingleObject(g_hReadEvent, INFINITE);
 	char loginStatusSend[BUFSIZE];
-	
+
 	if (room1 == true)
 		strcpy(loginStatusSend, "1@");
 	else
@@ -300,6 +301,7 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	sprintf(g_chatmsg.buf, loginStatusSend);
 	// 쓰기 완료를 알림
 	SetEvent(g_hWriteEvent);
+#pragma endregion
 
 	// 스레드 종료 대기
 	retval = WaitForMultipleObjects(2, hThread, FALSE, INFINITE);
@@ -337,7 +339,7 @@ DWORD WINAPI ReadThread(LPVOID arg)
 
 		if (comm_msg.type == CHATTING) {
 			chat_msg = (CHAT_MSG *)&comm_msg;
-			DisplayText("[받은 메시지] %s\r\n", chat_msg->buf);
+			DisplayText("%s\r\n", chat_msg->buf);
 		}
 	}
 	return 0;

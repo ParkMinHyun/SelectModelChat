@@ -182,14 +182,15 @@ int main(int argc, char *argv[])
 						SOCKETINFO *ptr2 = SocketInfoArray[j];
 						// 방이 같은 경우에만 데이타 전송
 						if (ptr->room == ptr2->room) {
+							// Client가 처음 채팅방에 접속한 경우
 							if (loginCheck == true) {
-								// 데이터 보내기
 								sprintf(g_chatmsg.buf, "닉네임 %s님이 채팅방%d에 %s", ptr->name, ptr->room, "접속하셨습니다!");
 								retval = send(ptr2->sock, (char *)&g_chatmsg, BUFSIZE, 0);
 							}
-							else
-								retval = send(ptr2->sock, ptr->buf, BUFSIZE, 0);
-
+							else{
+								sprintf(g_chatmsg.buf, "%s : %s", ptr->name, tempBuf);
+								retval = send(ptr2->sock, (char *)&g_chatmsg, BUFSIZE, 0);
+							}
 							if (retval == SOCKET_ERROR) {
 								err_display("send()");
 								RemoveSocketInfo(j);
