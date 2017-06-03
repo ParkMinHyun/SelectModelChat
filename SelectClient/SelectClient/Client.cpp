@@ -150,6 +150,7 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	static HWND hEditIPaddr;
 	static HWND hEditPort;
+	static HWND hName;
 	static HWND hButtonConnect;
 	static HWND hEditMsg;
 	static HWND hRoom1RadioBtn;
@@ -162,6 +163,7 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		g_hDlg = hDlg;
 		hEditIPaddr = GetDlgItem(hDlg, IDC_IPADDR);
 		hEditPort = GetDlgItem(hDlg, IDC_PORT);
+		hName = GetDlgItem(hDlg, IDC_Name);
 		hRoom1RadioBtn = GetDlgItem(hDlg, IDC_ROOM1);
 		hRoom2RadioBtn = GetDlgItem(hDlg, IDC_ROOM2);
 		hButtonConnect = GetDlgItem(hDlg, IDC_CONNECT);
@@ -192,7 +194,13 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			return TRUE;
 
 		case IDC_CONNECT:
+			// room 체크 안하면 return
 			if (room1 == false && room2 == false)
+				return true;
+
+			// name 입력 안했으면 return
+			GetDlgItemText(hDlg, IDC_Name, name, NAMESIZE + 1);
+			if (strlen(name)==0)
 				return true;
 
 			GetDlgItemText(hDlg, IDC_IPADDR, g_ipaddr, sizeof(g_ipaddr));
@@ -281,10 +289,13 @@ DWORD WINAPI ClientMain(LPVOID arg)
 
 	// 읽기 완료를 기다림
 	WaitForSingleObject(g_hReadEvent, INFINITE);
+	char loginStatusSend[BUFSIZE];
+	strcpy(loginStatusSend, "1@");
+	strcat(loginStatusSend, name);
 	if (room1 == true)
-		sprintf(g_chatmsg.buf, "1@");
+		sprintf(g_chatmsg.buf, loginStatusSend);
 	else
-		sprintf(g_chatmsg.buf, "2@");
+		sprintf(g_chatmsg.buf, loginStatusSend);
 	// 쓰기 완료를 알림
 	SetEvent(g_hWriteEvent);
 

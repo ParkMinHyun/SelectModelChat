@@ -156,6 +156,7 @@ int main(int argc, char *argv[])
 					// 현재 접속한 모든 클라이언트에게 데이터를 보냄!
 					for (j = 0; j < nTotalSockets; j++) {
 						SOCKETINFO *ptr2 = SocketInfoArray[j];
+						// 방이 같은 경우에만 데이타 전송
 						if (ptr->room == ptr2->room) {
 							retval = send(ptr2->sock, ptr->buf, BUFSIZE, 0);
 							if (retval == SOCKET_ERROR) {
