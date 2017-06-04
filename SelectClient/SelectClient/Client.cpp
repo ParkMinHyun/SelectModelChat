@@ -40,6 +40,7 @@ static volatile BOOL g_bStart; // 통신 시작 여부
 static SOCKET        g_sock; // 클라이언트 소켓
 static HANDLE        g_hReadEvent, g_hWriteEvent; // 이벤트 핸들
 static CHAT_MSG      g_chatmsg; // 채팅 메시지 저장
+static HWND hButtonConnect;
 
 static bool room1 = false;
 static bool room2 = false;
@@ -151,7 +152,6 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	static HWND hEditIPaddr;
 	static HWND hEditPort;
 	static HWND hName;
-	static HWND hButtonConnect;
 	static HWND hEditMsg;
 	static HWND hRoom1RadioBtn;
 	static HWND hRoom2RadioBtn;
@@ -348,6 +348,10 @@ DWORD WINAPI ReadThread(LPVOID arg)
 			chat_msg = (CHAT_MSG *)&comm_msg;
 			DisplayText("%s\r\n", chat_msg->buf);
 		}
+	}
+	if (!strcmp(chat_msg->buf, "같은 이름의 접속자가 있습니다. 닉네임을 바꿔주세요")) {
+		EnableWindow(hButtonConnect, TRUE);
+
 	}
 	return 0;
 }

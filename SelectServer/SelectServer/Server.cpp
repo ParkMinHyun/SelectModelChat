@@ -3,6 +3,7 @@
 #include <ws2tcpip.h>
 #include <windows.h>
 #include <stdlib.h>
+#include <time.h>
 #include <stdio.h>
 
 #define SERVERPORT 9000
@@ -11,7 +12,7 @@
 #define ROOMCHECK  64
 #define ROOM1      49
 #define ROOM2      50
-#define CHATTING    1000                   // 메시지 타입: 채팅
+#define CHATTING   1000                   // 메시지 타입: 채팅
 #define MSGSIZE     (BUFSIZE-sizeof(int))  // 채팅 메시지 최대 길이
 #define SHOWUSERS  "#!ShowUser"
 // 공통 메시지 형식
@@ -30,11 +31,13 @@ struct SOCKETINFO
 	int    recvbytes;
 	int	   room;
 	char   name[NAMESIZE];
+	int    ID;
 };
 
 bool loginCheck = false;
 bool showUsersCheck = false;
 int nTotalSockets = 0;
+int userID;
 static CHAT_MSG      g_chatmsg; // 채팅 메시지 저장
 SOCKETINFO *SocketInfoArray[FD_SETSIZE];
 
@@ -69,6 +72,20 @@ void err_display(char *msg)
 	LocalFree(lpMsgBuf);
 }
 #pragma endregion
+
+
+bool checkSameNameUser(SOCKETINFO *ptr, int retval) {
+	for (int i = 0; i < nTotalSockets; i++) {
+		SOCKETINFO *ptr3 = SocketInfoArray[i];
+		if ( !strcmp(ptr3->name,ptr->name) && ptr3->room == ptr->room && ptr3->ID != ptr->ID) {
+			sprintf(g_chatmsg.buf, "같은 이름의 접속자가 있습니다. 닉네임을 바꿔주세요", g_chatmsg.buf, ptr3->name);
+			retval = send(ptr->sock, (char *)&g_chatmsg, BUFSIZE, 0);
+			RemoveSocketInfo(nTotalSockets-1);
+			return true;
+		}
+	}
+	return false;
+}
 
 int main(int argc, char *argv[])
 {
@@ -157,7 +174,7 @@ int main(int argc, char *argv[])
 
 				// Login일 경우 판별하기 위해 tempBuf에 User초기화 내용 저장(Room,Name)
 				strncpy(tempBuf, ptr->buf + 4, NAMESIZE + 3);
-				// room 초기화 
+				// User가 처음 들어왔을 경우 room 초기화 
 				if (tempBuf[1] == ROOMCHECK)
 				{
 					char *splitChar = strtok(tempBuf, "@");
@@ -173,6 +190,7 @@ int main(int argc, char *argv[])
 
 					strcpy(ptr->name, splitBuf[1]);
 				}
+				// User 보여달라 요청했을 경우
 				else if (!strcmp(tempBuf, SHOWUSERS))
 				{
 					sprintf(g_chatmsg.buf, "현재 접속한 User입니다.\n");
@@ -189,16 +207,19 @@ int main(int argc, char *argv[])
 
 						if (showUsersCheck == true) {
 							sprintf(g_chatmsg.buf, "%s %s", g_chatmsg.buf, ptr2->name);
-							if (j == nTotalSockets - 1){
-								retval = send(ptr2->sock, (char *)&g_chatmsg, BUFSIZE, 0);
+							if (j == nTotalSockets - 1) {
+								retval = send(ptr->sock, (char *)&g_chatmsg, BUFSIZE, 0);
 							}
 							continue;
 						}
-
 						// 방이 같은 경우에만 데이타 전송
 						else if (ptr->room == ptr2->room) {
 							// Client가 처음 채팅방에 접속한 경우
 							if (loginCheck == true) {
+								//
+								if (checkSameNameUser(ptr, retval)) {
+									break;
+								}
 								sprintf(g_chatmsg.buf, "닉네임 %s님이 채팅방%d에 %s", ptr->name, ptr->room, "접속하셨습니다!");
 								retval = send(ptr2->sock, (char *)&g_chatmsg, BUFSIZE, 0);
 							}
@@ -237,9 +258,13 @@ BOOL AddSocketInfo(SOCKET sock)
 		printf("[오류] 메모리가 부족합니다!\n");
 		return FALSE;
 	}
+	//시간에 따른 랜덤 UserID값 생성
+	srand(time(NULL));
+	userID = rand();
 
 	ptr->sock = sock;
 	ptr->recvbytes = 0;
+	ptr->ID = userID;
 	SocketInfoArray[nTotalSockets++] = ptr;
 	loginCheck = true;
 
@@ -267,3 +292,4 @@ void RemoveSocketInfo(int nIndex)
 
 	--nTotalSockets;
 }
+
