@@ -53,7 +53,6 @@ char oneToOneName[NAMESIZE];
 
 bool ipCheck = false;
 bool portCheck = false;
-bool nameCheck = false, loginCheck = false, registerNameCheck = false;
 
 // 대화상자 프로시저
 BOOL CALLBACK DlgProc(HWND, UINT, WPARAM, LPARAM);
@@ -201,6 +200,7 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		// 컨트롤 초기화
 		SendMessage(hEditMsg, EM_SETLIMITTEXT, MSGSIZE, 0);
 		EnableWindow(g_hButtonSendMsg, FALSE);
+		EnableWindow(hShowUserBtn, FALSE);
 		SetDlgItemText(hDlg, IDC_IPADDR, SERVERIPV4);
 		SetDlgItemInt(hDlg, IDC_PORT, SERVERPORT, FALSE);
 
@@ -289,6 +289,7 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				EnableWindow(hEditIPaddr, FALSE);
 				EnableWindow(hEditPort, FALSE);
 				EnableWindow(g_hButtonSendMsg, TRUE);
+				EnableWindow(hShowUserBtn, TRUE);
 				SetFocus(hEditMsg);
 			}
 			return TRUE;
