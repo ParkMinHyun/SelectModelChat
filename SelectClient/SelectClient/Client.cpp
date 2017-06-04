@@ -241,7 +241,7 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			// 귓속말일 경우 따로 표시해주기
 			if (oneToOneCheck == true){
 				GetDlgItemText(hDlg, IDC_ONETOONENAME, oneToOneName, NAMESIZE + 1);
-				sprintf(g_chatmsg.buf, "%s%s%s",g_chatmsg.buf,"!$#@!",);
+				sprintf(g_chatmsg.buf, "%s@%s@%s",g_chatmsg.buf,oneToOneName,"!^");
 			}
 				// 쓰기 완료를 알림
 			SetEvent(g_hWriteEvent);
@@ -369,10 +369,9 @@ DWORD WINAPI ReadThread(LPVOID arg)
 			DisplayText("%s\r\n", chat_msg->buf);
 		}
 	}
-	if (!strcmp(chat_msg->buf, "같은 이름의 접속자가 있습니다. 닉네임을 바꿔주세요")) {
+	if (!strcmp(chat_msg->buf, "같은 이름의 접속자가 있습니다. 닉네임을 바꿔주세요"))
 		EnableWindow(hButtonConnect, TRUE);
 
-	}
 	return 0;
 }
 

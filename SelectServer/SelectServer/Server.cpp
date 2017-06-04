@@ -36,7 +36,7 @@ struct SOCKETINFO
 
 bool loginCheck = false;
 bool showUsersCheck = false;
-bool oneTonOneCheck = false;
+bool oneToOneCheck = true;
 int nTotalSockets = 0;
 int userID;
 static CHAT_MSG      g_chatmsg; // 채팅 메시지 저장
@@ -45,6 +45,9 @@ SOCKETINFO *SocketInfoArray[FD_SETSIZE];
 // 소켓 관리 함수
 BOOL AddSocketInfo(SOCKET sock);
 void RemoveSocketInfo(int nIndex);
+bool checkSameNameUser(SOCKETINFO *ptr, int retval);
+bool checkOneToOneUser(SOCKETINFO *ptr, char *msg, char *name, int retval);
+void flagCheckInit();
 
 #pragma region ErrorFunc
 // 소켓 함수 오류 출력 후 종료
@@ -75,21 +78,11 @@ void err_display(char *msg)
 #pragma endregion
 
 
-bool checkSameNameUser(SOCKETINFO *ptr, int retval) {
-	for (int i = 0; i < nTotalSockets; i++) {
-		SOCKETINFO *ptr3 = SocketInfoArray[i];
-		if (!strcmp(ptr3->name, ptr->name) && ptr3->room == ptr->room && ptr3->ID != ptr->ID) {
-			sprintf(g_chatmsg.buf, "같은 이름의 접속자가 있습니다. 닉네임을 바꿔주세요", g_chatmsg.buf, ptr3->name);
-			retval = send(ptr->sock, (char *)&g_chatmsg, BUFSIZE, 0);
-			RemoveSocketInfo(nTotalSockets - 1);
-			return true;
-		}
-	}
-	return false;
-}
 
 int main(int argc, char *argv[])
 {
+#pragma region InitServer
+
 	int retval;
 	// 변수 초기화(일부)
 	g_chatmsg.type = CHATTING;
@@ -122,7 +115,7 @@ int main(int argc, char *argv[])
 	int addrlen, i, j;
 	// 데이터 통신에 사용할 변수(IPv4)
 	SOCKADDR_IN clientaddrv4;
-
+#pragma endregion
 	while (1) {
 		// 소켓 셋 초기화
 		FD_ZERO(&rset);
@@ -156,13 +149,13 @@ int main(int argc, char *argv[])
 		}
 
 		char tempBuf[BUFSIZE + 1];
-		char oeeToOnetempBuf[BUFSIZE + 1];
 		char *splitBuf[2] = { NULL };
-		char *oneToOnesplitBuf[2] = { NULL };
+		char *oneToOneSplitBuf[2] = { NULL };
 
 		// 소켓 셋 검사(2): 데이터 통신
 		for (i = 0; i < nTotalSockets; i++) {
 			SOCKETINFO *ptr = SocketInfoArray[i];
+
 			if (FD_ISSET(ptr->sock, &rset)) {
 				// 데이터 받기
 				retval = recv(ptr->sock, ptr->buf + ptr->recvbytes,
@@ -175,15 +168,10 @@ int main(int argc, char *argv[])
 				// 받은 바이트 수 누적
 				ptr->recvbytes += retval;
 
-				// Login일 경우 판별하기 위해 tempBuf에 User초기화 내용 저장(Room,Name)
+				// Buf 앞 부분 짜르기
 				strncpy(tempBuf, ptr->buf + 4, BUFSIZE - 4);
+				// temBufSize 측정하기 
 				int tempBufSize = strlen(tempBuf) + 4;
-				if (ptr->buf[tempBufSize-1] == '!' && ptr->buf[tempBufSize-5] == '!' )
-				{
-					strncpy(oeeToOnetempBuf, ptr->buf + tempBufSize, BUFSIZE - tempBufSize);
-					oneTonOneCheck = true;
-
-				}
 
 				// User가 처음 들어왔을 경우 room 초기화 
 				if (tempBuf[1] == ROOMCHECK)
@@ -201,6 +189,22 @@ int main(int argc, char *argv[])
 
 					strcpy(ptr->name, splitBuf[1]);
 				}
+
+				// 1:1 대화일 경우
+				else if (ptr->buf[tempBufSize - 2] == '!' && ptr->buf[tempBufSize - 1] == '^') {
+					char *splitChar = strtok(tempBuf, "@");
+					for (int i = 0; i < 2; i++) {
+						oneToOneSplitBuf[i] = splitChar;
+						splitChar = strtok(NULL, "@");
+					}
+
+					if (checkOneToOneUser(ptr, oneToOneSplitBuf[0], oneToOneSplitBuf[1], retval) == false) {
+						sprintf(g_chatmsg.buf, "일치하는 이름의 사용자가 없습니다.");
+						retval = send(ptr->sock, (char *)&g_chatmsg, BUFSIZE, 0);
+					}
+					break;
+				}
+
 				// User 보여달라 요청했을 경우
 				else if (!strcmp(tempBuf, SHOWUSERS))
 				{
@@ -216,18 +220,21 @@ int main(int argc, char *argv[])
 					for (j = 0; j < nTotalSockets; j++) {
 						SOCKETINFO *ptr2 = SocketInfoArray[j];
 
+						// 접속자 보여달라 했을 경우
 						if (showUsersCheck == true) {
 							sprintf(g_chatmsg.buf, "%s %s", g_chatmsg.buf, ptr2->name);
 							if (j == nTotalSockets - 1) {
-								retval = send(ptr->sock, (char *)&g_chatmsg, BUFSIZE, 0);
+								retval = send(ptr2->sock, (char *)&g_chatmsg, BUFSIZE, 0);
 							}
 							continue;
 						}
+
+
 						// 방이 같은 경우에만 데이타 전송
 						else if (ptr->room == ptr2->room) {
 							// Client가 처음 채팅방에 접속한 경우
 							if (loginCheck == true) {
-								//
+								// 같은 이름의 사용자 있는지 체크
 								if (checkSameNameUser(ptr, retval)) {
 									break;
 								}
@@ -303,8 +310,37 @@ void RemoveSocketInfo(int nIndex)
 	--nTotalSockets;
 }
 
+bool checkSameNameUser(SOCKETINFO *ptr, int retval) {
+	for (int i = 0; i < nTotalSockets; i++) {
+		SOCKETINFO *ptr3 = SocketInfoArray[i];
+		if (!strcmp(ptr3->name, ptr->name) && ptr3->room == ptr->room && ptr3->ID != ptr->ID) {
+			sprintf(g_chatmsg.buf, "같은 이름의 접속자가 있습니다. 닉네임을 바꿔주세요", g_chatmsg.buf, ptr3->name);
+			retval = send(ptr->sock, (char *)&g_chatmsg, BUFSIZE, 0);
+			RemoveSocketInfo(nTotalSockets - 1);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool checkOneToOneUser(SOCKETINFO *ptr, char *msg, char *name, int retval) {
+	// 받은 바이트 수 리셋
+	ptr->recvbytes = 0;
+	for (int i = 0; i < nTotalSockets; i++) {
+		SOCKETINFO *ptr3 = SocketInfoArray[i];
+
+		if (!strcmp(ptr3->name, name))
+		{
+			sprintf(g_chatmsg.buf, "(귓속말) %s : %s", ptr->name, msg);
+			retval = send(ptr->sock, (char *)&g_chatmsg, BUFSIZE, 0);
+			retval = send(ptr3->sock, (char *)&g_chatmsg, BUFSIZE, 0);
+			return true;
+		}
+	}
+	return false;
+}
+
 void flagCheckInit() {
 	loginCheck = false;
 	showUsersCheck = false;
-	oneTonOneCheck = false;
 }
