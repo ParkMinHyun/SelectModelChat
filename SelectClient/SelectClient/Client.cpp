@@ -209,7 +209,7 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 
-		case IDC_IPCHECK :
+		case IDC_IPCHECK:
 			GetDlgItemText(hDlg, IDC_IPADDR, multicastIP, BUFSIZE + 1);
 			if (checkClassDIP(multicastIP) == false)
 			{
@@ -248,14 +248,28 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			return TRUE;
 
 		case IDC_CONNECT:
-			// room 체크 안하면 return
-			if (room1 == false && room2 == false)
-				return true;
+			if (ipCheck == false) {
+				MessageBox(hDlg, "IP를 체크하세요", "접속 불가", MB_OK);
+				SetFocus(hEditIPaddr);
+				return TRUE;
+			}
+			if (portCheck == false) {
+				MessageBox(hDlg, "Port를 체크하세요", "접속 불가", MB_OK);
+				SetFocus(hEditPort);
+				return TRUE;
+			}
 
 			// name 입력 안했으면 return
 			GetDlgItemText(hDlg, IDC_Name, name, NAMESIZE + 1);
-			if (strlen(name) == 0)
-				return true;
+			if (strlen(name) == 0) {
+				MessageBox(hDlg, "NickName을 설정하세요", "접속 불가", MB_OK);
+				return TRUE;
+			}
+			// room 체크 안하면 return
+			if (room1 == false && room2 == false) {
+				MessageBox(hDlg, "방을 설정하세요", "접속 불가", MB_OK);
+				return TRUE;
+			}
 
 			GetDlgItemText(hDlg, IDC_IPADDR, g_ipaddr, sizeof(g_ipaddr));
 			g_port = GetDlgItemInt(hDlg, IDC_PORT, NULL, FALSE);
@@ -283,13 +297,13 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			// 읽기 완료를 기다림
 			WaitForSingleObject(g_hReadEvent, INFINITE);
 			GetDlgItemText(hDlg, IDC_MSG, g_chatmsg.buf, MSGSIZE);
-			
+
 			// 귓속말일 경우 따로 표시해주기
-			if (oneToOneCheck == true){
+			if (oneToOneCheck == true) {
 				GetDlgItemText(hDlg, IDC_ONETOONENAME, oneToOneName, NAMESIZE + 1);
-				sprintf(g_chatmsg.buf, "%s@%s@%s",g_chatmsg.buf,oneToOneName,"!^");
+				sprintf(g_chatmsg.buf, "%s@%s@%s", g_chatmsg.buf, oneToOneName, "!^");
 			}
-				// 쓰기 완료를 알림
+			// 쓰기 완료를 알림
 			SetEvent(g_hWriteEvent);
 			// 입력된 텍스트 전체를 선택 표시
 			SendMessage(hEditMsg, EM_SETSEL, 0, -1);
@@ -306,7 +320,7 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case IDC_ONETONECHECK:
 			if (oneToOneCheck == false)
 				oneToOneCheck = true;
-			else 
+			else
 				oneToOneCheck = false;
 			return TRUE;
 
@@ -332,7 +346,7 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 DWORD WINAPI ClientMain(LPVOID arg)
 {
 	int retval;
-	
+
 	// socket()
 	g_sock = socket(AF_INET, SOCK_STREAM, 0);
 	if (g_sock == INVALID_SOCKET) err_quit("socket()");
