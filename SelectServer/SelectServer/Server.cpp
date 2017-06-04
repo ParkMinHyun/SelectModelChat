@@ -223,7 +223,7 @@ int main(int argc, char *argv[])
 						if (showUsersCheck == true) {
 							sprintf(g_chatmsg.buf, "%s %s", g_chatmsg.buf, ptr2->name);
 							if (j == nTotalSockets - 1) {
-								retval = send(ptr2->sock, (char *)&g_chatmsg, BUFSIZE, 0);
+								retval = send(ptr->sock, (char *)&g_chatmsg, BUFSIZE, 0);
 							}
 							continue;
 						}

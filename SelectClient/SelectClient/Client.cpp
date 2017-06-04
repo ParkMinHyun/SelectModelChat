@@ -30,16 +30,16 @@ struct CHAT_MSG
 };
 
 static HWND          g_hDlg;
-static HINSTANCE     g_hInst; // 응용 프로그램 인스턴스 핸들
-static HWND          g_hButtonSendMsg; // '메시지 전송' 버튼
-static HWND          g_hEditStatus; // 받은 메시지 출력
-static char          g_ipaddr[64]; // 서버 IP 주소
-static u_short       g_port; // 서버 포트 번호
-static HANDLE        g_hClientThread; // 스레드 핸들
-static volatile BOOL g_bStart; // 통신 시작 여부
-static SOCKET        g_sock; // 클라이언트 소켓
-static HANDLE        g_hReadEvent, g_hWriteEvent; // 이벤트 핸들
-static CHAT_MSG      g_chatmsg; // 채팅 메시지 저장
+static HINSTANCE     g_hInst;						// 응용 프로그램 인스턴스 핸들
+static HWND          g_hButtonSendMsg;				// '메시지 전송' 버튼
+static HWND          g_hEditStatus;					// 받은 메시지 출력
+static char          g_ipaddr[64];					// 서버 IP 주소
+static u_short       g_port;						// 서버 포트 번호
+static HANDLE        g_hClientThread;				// 스레드 핸들
+static volatile BOOL g_bStart;						// 통신 시작 여부
+static SOCKET        g_sock;						// 클라이언트 소켓
+static HANDLE        g_hReadEvent, g_hWriteEvent;	// 이벤트 핸들
+static CHAT_MSG      g_chatmsg;						// 채팅 메시지 저장
 static HWND hButtonConnect;
 
 static bool room1 = false;
@@ -265,6 +265,7 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				MessageBox(hDlg, "NickName을 설정하세요", "접속 불가", MB_OK);
 				return TRUE;
 			}
+
 			// room 체크 안하면 return
 			if (room1 == false && room2 == false) {
 				MessageBox(hDlg, "방을 설정하세요", "접속 불가", MB_OK);
@@ -430,6 +431,7 @@ DWORD WINAPI ReadThread(LPVOID arg)
 			DisplayText("%s\r\n", chat_msg->buf);
 		}
 	}
+
 	if (!strcmp(chat_msg->buf, "같은 이름의 접속자가 있습니다. 닉네임을 바꿔주세요"))
 		EnableWindow(hButtonConnect, TRUE);
 
