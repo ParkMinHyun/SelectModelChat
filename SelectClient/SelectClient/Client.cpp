@@ -45,8 +45,15 @@ static HWND hButtonConnect;
 static bool room1 = false;
 static bool room2 = false;
 static bool oneToOneCheck = false;
+
+char *multicastIP;
+char *multicastPort;
 char name[NAMESIZE];
 char oneToOneName[NAMESIZE];
+
+bool ipCheck = false;
+bool portCheck = false;
+bool nameCheck = false, loginCheck = false, registerNameCheck = false;
 
 // 대화상자 프로시저
 BOOL CALLBACK DlgProc(HWND, UINT, WPARAM, LPARAM);
@@ -57,6 +64,8 @@ DWORD WINAPI WriteThread(LPVOID arg);
 // 자식 윈도우 프로시저
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
+
+bool checkClassDIP(char *ip);
 #pragma region EtcFunc
 // 에디트 컨트롤에 문자열 출력
 void DisplayText(char *fmt, ...)
@@ -127,6 +136,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	WSADATA wsa;
 	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) return 1;
 
+	// IP,PORT 메모리 할당
+	multicastIP = (char *)malloc(sizeof(char) * 15);
+	multicastPort = (char *)malloc(sizeof(char) * 6);
+
 	// 이벤트 생성
 	g_hReadEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
 	if (g_hReadEvent == NULL) return 1;
@@ -153,7 +166,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	static HWND hEditIPaddr;
+	static HWND hCheckIP;
 	static HWND hEditPort;
+	static HWND hCheckPort;
 	static HWND hName;
 	static HWND hEditMsg;
 	static HWND hRoom1RadioBtn;
@@ -167,7 +182,9 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 #pragma region getTheControlHandle
 		g_hDlg = hDlg;
 		hEditIPaddr = GetDlgItem(hDlg, IDC_IPADDR);
+		hCheckIP = GetDlgItem(hDlg, IDC_IPCHECK);
 		hEditPort = GetDlgItem(hDlg, IDC_PORT);
+		hCheckPort = GetDlgItem(hDlg, IDC_PORTCHECK);
 		hName = GetDlgItem(hDlg, IDC_Name);
 		hShowUserBtn = GetDlgItem(hDlg, IDC_SHOWUSER);
 		hRoom1RadioBtn = GetDlgItem(hDlg, IDC_ROOM1);
@@ -191,6 +208,18 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 
+		case IDC_IPCHECK :
+			GetDlgItemText(hDlg, IDC_IPADDR, multicastIP, BUFSIZE + 1);
+			if (checkClassDIP(multicastIP) == false)
+			{
+				MessageBox(hDlg, "올바른 IP만 입력할 수 있습니다", "IP오류", MB_OK);
+				SetFocus(hCheckIP);
+				return TRUE;
+			}
+			EnableWindow(hEditIPaddr, FALSE);    //주소 편집 버튼 비활성화
+			EnableWindow(hCheckIP, FALSE);       //주소 편집 컨트롤 비활성화
+			ipCheck = true;
+			return TRUE;
 		case IDC_ROOM1:
 			room1 = true;
 			room2 = false;
@@ -407,4 +436,79 @@ DWORD WINAPI WriteThread(LPVOID arg)
 	}
 
 	return 0;
+}
+
+bool checkClassDIP(char *ip)
+{
+	// 공백 예외처리
+	if (strcmp(ip, " ") == 0)
+		return false;
+
+	// IP 길이 예외처리
+	int len = strlen(ip);
+	if (len > 15 || len < 7)
+		return false;
+
+	int nNumCount = 0;
+	int nDotCount = 0;
+	char checkIP1[3], checkIP2[3], checkIP3[3], checkIP4[3];
+	int i = 0, k = 0;
+
+	for (i = 0; i < len; i++)
+	{
+		// 0~9 아닌 숫자 걸르기
+		if (ip[i] < '0' || ip[i] > '9')
+		{
+			// . 기준으로 IP 분리하기
+			if (ip[i] == '.')
+			{
+				++nDotCount;
+				k = 0;
+				nNumCount = 0;
+			}
+			else
+				return false;
+		}
+		// 올바른 숫자 입력했을 경우 . 기준으로 해당 문자열에 IP 집어 넣기
+		else
+		{
+			if (nDotCount == 0) {
+				checkIP1[k++] = ip[i];
+			}
+			else if (nDotCount == 1) {
+				checkIP2[k++] = ip[i];
+			}
+			else if (nDotCount == 2) {
+				checkIP3[k++] = ip[i];
+			}
+			else if (nDotCount == 3) {
+				checkIP4[k++] = ip[i];
+			}
+			if (++nNumCount > 3)
+				return false;
+		}
+	}
+	// .이 3개 아니면 false
+	if (nDotCount != 3)
+		return false;
+
+	int convertInputIP1 = atoi(checkIP1);
+	int convertInputIP2 = atoi(checkIP2);
+	int convertInputIP3 = atoi(checkIP3);
+	int convertInputIP4 = atoi(checkIP4);
+
+	// class IP 검사하기
+	if (convertInputIP1 >= 0 && convertInputIP1 <= 255) {
+		if (convertInputIP2 >= 0 && convertInputIP2 <= 255) {
+			if (convertInputIP3 >= 0 && convertInputIP3 <= 255) {
+				if (convertInputIP4 >= 0 && convertInputIP4 <= 255) {
+					return true;
+				}
+				return false;
+			}
+			return false;
+		}
+		return false;
+	}
+	return false;
 }

@@ -15,6 +15,7 @@
 #define CHATTING   1000                   // 메시지 타입: 채팅
 #define MSGSIZE     (BUFSIZE-sizeof(int))  // 채팅 메시지 최대 길이
 #define SHOWUSERS  "#!ShowUser"
+
 // 공통 메시지 형식
 // sizeof(COMM_MSG) == 256
 struct CHAT_MSG
@@ -36,7 +37,6 @@ struct SOCKETINFO
 
 bool loginCheck = false;
 bool showUsersCheck = false;
-bool oneToOneCheck = true;
 int nTotalSockets = 0;
 int userID;
 static CHAT_MSG      g_chatmsg; // 채팅 메시지 저장
@@ -76,9 +76,6 @@ void err_display(char *msg)
 	LocalFree(lpMsgBuf);
 }
 #pragma endregion
-
-
-
 int main(int argc, char *argv[])
 {
 #pragma region InitServer
@@ -182,6 +179,7 @@ int main(int argc, char *argv[])
 						splitChar = strtok(NULL, "@");
 					}
 
+					// 방 체크
 					if (tempBuf[0] == ROOM1)
 						ptr->room = 1;
 					else if (tempBuf[0] == ROOM2)
@@ -198,6 +196,7 @@ int main(int argc, char *argv[])
 						splitChar = strtok(NULL, "@");
 					}
 
+					// 닉네임 체크
 					if (checkOneToOneUser(ptr, oneToOneSplitBuf[0], oneToOneSplitBuf[1], retval) == false) {
 						sprintf(g_chatmsg.buf, "일치하는 이름의 사용자가 없습니다.");
 						retval = send(ptr->sock, (char *)&g_chatmsg, BUFSIZE, 0);
@@ -229,7 +228,6 @@ int main(int argc, char *argv[])
 							continue;
 						}
 
-
 						// 방이 같은 경우에만 데이타 전송
 						else if (ptr->room == ptr2->room) {
 							// Client가 처음 채팅방에 접속한 경우
@@ -241,10 +239,12 @@ int main(int argc, char *argv[])
 								sprintf(g_chatmsg.buf, "닉네임 %s님이 채팅방%d에 %s", ptr->name, ptr->room, "접속하셨습니다!");
 								retval = send(ptr2->sock, (char *)&g_chatmsg, BUFSIZE, 0);
 							}
+							// 일반 통신
 							else {
 								sprintf(g_chatmsg.buf, "%s : %s", ptr->name, tempBuf);
 								retval = send(ptr2->sock, (char *)&g_chatmsg, BUFSIZE, 0);
 							}
+							// 에러 났을 경우
 							if (retval == SOCKET_ERROR) {
 								err_display("send()");
 								RemoveSocketInfo(j);
