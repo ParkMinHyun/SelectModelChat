@@ -44,6 +44,7 @@ static HWND hButtonConnect;
 
 static bool room1 = false;
 static bool room2 = false;
+static bool oneToOneCheck = false;
 char name[NAMESIZE];
 // 대화상자 프로시저
 BOOL CALLBACK DlgProc(HWND, UINT, WPARAM, LPARAM);
@@ -156,6 +157,8 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	static HWND hRoom1RadioBtn;
 	static HWND hRoom2RadioBtn;
 	static HWND hShowUserBtn;
+	static HWND hOneToOneCheckBox;
+	static HWND hOneToOneTextbox;
 
 	switch (uMsg) {
 	case WM_INITDIALOG:
@@ -171,6 +174,8 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		hEditMsg = GetDlgItem(hDlg, IDC_MSG);
 		g_hButtonSendMsg = GetDlgItem(hDlg, IDC_SENDMSG);
 		g_hEditStatus = GetDlgItem(hDlg, IDC_STATUS);
+		hOneToOneCheckBox = GetDlgItem(hDlg, IDC_ONETONECHECK);
+		hOneToOneTextbox = GetDlgItem(hDlg, IDC_ONETOONENAME);
 #pragma endregion
 
 		// 컨트롤 초기화
@@ -229,7 +234,12 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case IDC_SENDMSG:
 			// 읽기 완료를 기다림
 			WaitForSingleObject(g_hReadEvent, INFINITE);
-			GetDlgItemText(hDlg, IDC_MSG, g_chatmsg.buf, MSGSIZE);
+			if (oneToOneCheck == false)
+				GetDlgItemText(hDlg, IDC_MSG, g_chatmsg.buf, MSGSIZE);
+			else {
+				sprintf(g_chatmsg.buf, "%s!$#@!",g_chatmsg.buf);
+				GetDlgItemText(hDlg, IDC_MSG, g_chatmsg.buf, MSGSIZE);
+			}
 			// 쓰기 완료를 알림
 			SetEvent(g_hWriteEvent);
 			// 입력된 텍스트 전체를 선택 표시
@@ -242,7 +252,16 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			sprintf(g_chatmsg.buf, "#!ShowUser");
 			// 쓰기 완료를 알림
 			SetEvent(g_hWriteEvent);
-			return true;
+			return TRUE;
+
+		case IDC_ONETONECHECK:
+			if (oneToOneCheck == false) {
+				oneToOneCheck = true;
+			}
+			else {
+				oneToOneCheck = false;
+			}
+			return TRUE;
 
 		case IDCANCEL:
 			/*if (MessageBox(hDlg, "정말로 종료하시겠습니까?",
@@ -266,7 +285,7 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 DWORD WINAPI ClientMain(LPVOID arg)
 {
 	int retval;
-
+	
 	// socket()
 	g_sock = socket(AF_INET, SOCK_STREAM, 0);
 	if (g_sock == INVALID_SOCKET) err_quit("socket()");
