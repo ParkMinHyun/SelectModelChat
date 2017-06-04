@@ -5,24 +5,26 @@ c:\users\parkminhyun\documents\selectmodelchat\selectserver\selectserver\server.
   c:\program files (x86)\windows kits\10\include\10.0.15063.0\ucrt\stdio.h(1772): note: 'sprintf' 선언을 참조하십시오.
 c:\users\parkminhyun\documents\selectmodelchat\selectserver\selectserver\server.cpp(152): warning C4996: 'inet_ntoa': Use inet_ntop() or InetNtop() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
   c:\program files (x86)\windows kits\10\include\10.0.15063.0\um\winsock2.h(1848): note: 'inet_ntoa' 선언을 참조하십시오.
-c:\users\parkminhyun\documents\selectmodelchat\selectserver\selectserver\server.cpp(177): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+c:\users\parkminhyun\documents\selectmodelchat\selectserver\selectserver\server.cpp(179): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   c:\program files (x86)\windows kits\10\include\10.0.15063.0\ucrt\string.h(343): note: 'strncpy' 선언을 참조하십시오.
-c:\users\parkminhyun\documents\selectmodelchat\selectserver\selectserver\server.cpp(181): warning C4996: 'strtok': This function or variable may be unsafe. Consider using strtok_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+c:\users\parkminhyun\documents\selectmodelchat\selectserver\selectserver\server.cpp(183): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.15063.0\ucrt\string.h(343): note: 'strncpy' 선언을 참조하십시오.
+c:\users\parkminhyun\documents\selectmodelchat\selectserver\selectserver\server.cpp(189): warning C4996: 'strtok': This function or variable may be unsafe. Consider using strtok_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   c:\program files (x86)\windows kits\10\include\10.0.15063.0\ucrt\string.h(439): note: 'strtok' 선언을 참조하십시오.
-c:\users\parkminhyun\documents\selectmodelchat\selectserver\selectserver\server.cpp(184): warning C4996: 'strtok': This function or variable may be unsafe. Consider using strtok_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+c:\users\parkminhyun\documents\selectmodelchat\selectserver\selectserver\server.cpp(192): warning C4996: 'strtok': This function or variable may be unsafe. Consider using strtok_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   c:\program files (x86)\windows kits\10\include\10.0.15063.0\ucrt\string.h(439): note: 'strtok' 선언을 참조하십시오.
-c:\users\parkminhyun\documents\selectmodelchat\selectserver\selectserver\server.cpp(192): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+c:\users\parkminhyun\documents\selectmodelchat\selectserver\selectserver\server.cpp(200): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   c:\program files (x86)\windows kits\10\include\10.0.15063.0\ucrt\string.h(136): note: 'strcpy' 선언을 참조하십시오.
-c:\users\parkminhyun\documents\selectmodelchat\selectserver\selectserver\server.cpp(197): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+c:\users\parkminhyun\documents\selectmodelchat\selectserver\selectserver\server.cpp(205): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   c:\program files (x86)\windows kits\10\include\10.0.15063.0\ucrt\stdio.h(1772): note: 'sprintf' 선언을 참조하십시오.
-c:\users\parkminhyun\documents\selectmodelchat\selectserver\selectserver\server.cpp(217): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+c:\users\parkminhyun\documents\selectmodelchat\selectserver\selectserver\server.cpp(225): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   c:\program files (x86)\windows kits\10\include\10.0.15063.0\ucrt\stdio.h(1772): note: 'sprintf' 선언을 참조하십시오.
-c:\users\parkminhyun\documents\selectmodelchat\selectserver\selectserver\server.cpp(231): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+c:\users\parkminhyun\documents\selectmodelchat\selectserver\selectserver\server.cpp(239): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   c:\program files (x86)\windows kits\10\include\10.0.15063.0\ucrt\stdio.h(1772): note: 'sprintf' 선언을 참조하십시오.
-c:\users\parkminhyun\documents\selectmodelchat\selectserver\selectserver\server.cpp(235): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+c:\users\parkminhyun\documents\selectmodelchat\selectserver\selectserver\server.cpp(243): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   c:\program files (x86)\windows kits\10\include\10.0.15063.0\ucrt\stdio.h(1772): note: 'sprintf' 선언을 참조하십시오.
-c:\users\parkminhyun\documents\selectmodelchat\selectserver\selectserver\server.cpp(270): warning C4244: '인수': 'time_t'에서 'unsigned int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-c:\users\parkminhyun\documents\selectmodelchat\selectserver\selectserver\server.cpp(293): warning C4996: 'inet_ntoa': Use inet_ntop() or InetNtop() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+c:\users\parkminhyun\documents\selectmodelchat\selectserver\selectserver\server.cpp(278): warning C4244: '인수': 'time_t'에서 'unsigned int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+c:\users\parkminhyun\documents\selectmodelchat\selectserver\selectserver\server.cpp(301): warning C4996: 'inet_ntoa': Use inet_ntop() or InetNtop() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
   c:\program files (x86)\windows kits\10\include\10.0.15063.0\um\winsock2.h(1848): note: 'inet_ntoa' 선언을 참조하십시오.
   SelectServer.vcxproj -> C:\Users\ParkMinHyun\Documents\SelectModelChat\SelectServer\Debug\SelectServer.exe
   SelectServer.vcxproj -> C:\Users\ParkMinHyun\Documents\SelectModelChat\SelectServer\Debug\SelectServer.pdb (Partial PDB)

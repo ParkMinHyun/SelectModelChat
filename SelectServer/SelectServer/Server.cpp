@@ -156,7 +156,9 @@ int main(int argc, char *argv[])
 		}
 
 		char tempBuf[BUFSIZE + 1];
+		char oeeToOnetempBuf[BUFSIZE + 1];
 		char *splitBuf[2] = { NULL };
+		char *oneToOnesplitBuf[2] = { NULL };
 
 		// 소켓 셋 검사(2): 데이터 통신
 		for (i = 0; i < nTotalSockets; i++) {
@@ -174,7 +176,15 @@ int main(int argc, char *argv[])
 				ptr->recvbytes += retval;
 
 				// Login일 경우 판별하기 위해 tempBuf에 User초기화 내용 저장(Room,Name)
-				strncpy(tempBuf, ptr->buf + 4, BUFSIZE-4);
+				strncpy(tempBuf, ptr->buf + 4, BUFSIZE - 4);
+				int tempBufSize = strlen(tempBuf) + 4;
+				if (ptr->buf[tempBufSize-1] == '!' && ptr->buf[tempBufSize-5] == '!' )
+				{
+					strncpy(oeeToOnetempBuf, ptr->buf + tempBufSize, BUFSIZE - tempBufSize);
+					oneTonOneCheck = true;
+
+				}
+
 				// User가 처음 들어왔을 경우 room 초기화 
 				if (tempBuf[1] == ROOMCHECK)
 				{
@@ -197,55 +207,47 @@ int main(int argc, char *argv[])
 					sprintf(g_chatmsg.buf, "현재 접속한 User입니다.\n");
 					showUsersCheck = true;
 				}
-				// 1:1 귓속말 체크하기
-				else if (tempBuf[strlen(tempBuf) - 1] == '!'&& tempBuf[strlen(tempBuf) - 2] == '@'
-					&& tempBuf[strlen(tempBuf) - 3] == '#'  && tempBuf[strlen(tempBuf) - 4] == '$'
-					&& tempBuf[strlen(tempBuf) - 5] == '!')
-				{
-					oneTonOneCheck = true;
-				}
 
-					if (ptr->recvbytes == BUFSIZE) {
-						// 받은 바이트 수 리셋
-						ptr->recvbytes = 0;
+				if (ptr->recvbytes == BUFSIZE) {
+					// 받은 바이트 수 리셋
+					ptr->recvbytes = 0;
 
-						// 현재 접속한 모든 클라이언트에게 데이터를 보냄!
-						for (j = 0; j < nTotalSockets; j++) {
-							SOCKETINFO *ptr2 = SocketInfoArray[j];
+					// 현재 접속한 모든 클라이언트에게 데이터를 보냄!
+					for (j = 0; j < nTotalSockets; j++) {
+						SOCKETINFO *ptr2 = SocketInfoArray[j];
 
-							if (showUsersCheck == true) {
-								sprintf(g_chatmsg.buf, "%s %s", g_chatmsg.buf, ptr2->name);
-								if (j == nTotalSockets - 1) {
-									retval = send(ptr->sock, (char *)&g_chatmsg, BUFSIZE, 0);
+						if (showUsersCheck == true) {
+							sprintf(g_chatmsg.buf, "%s %s", g_chatmsg.buf, ptr2->name);
+							if (j == nTotalSockets - 1) {
+								retval = send(ptr->sock, (char *)&g_chatmsg, BUFSIZE, 0);
+							}
+							continue;
+						}
+						// 방이 같은 경우에만 데이타 전송
+						else if (ptr->room == ptr2->room) {
+							// Client가 처음 채팅방에 접속한 경우
+							if (loginCheck == true) {
+								//
+								if (checkSameNameUser(ptr, retval)) {
+									break;
 								}
+								sprintf(g_chatmsg.buf, "닉네임 %s님이 채팅방%d에 %s", ptr->name, ptr->room, "접속하셨습니다!");
+								retval = send(ptr2->sock, (char *)&g_chatmsg, BUFSIZE, 0);
+							}
+							else {
+								sprintf(g_chatmsg.buf, "%s : %s", ptr->name, tempBuf);
+								retval = send(ptr2->sock, (char *)&g_chatmsg, BUFSIZE, 0);
+							}
+							if (retval == SOCKET_ERROR) {
+								err_display("send()");
+								RemoveSocketInfo(j);
+								--j; // 루프 인덱스 보정
 								continue;
 							}
-							// 방이 같은 경우에만 데이타 전송
-							else if (ptr->room == ptr2->room) {
-								// Client가 처음 채팅방에 접속한 경우
-								if (loginCheck == true) {
-									//
-									if (checkSameNameUser(ptr, retval)) {
-										break;
-									}
-									sprintf(g_chatmsg.buf, "닉네임 %s님이 채팅방%d에 %s", ptr->name, ptr->room, "접속하셨습니다!");
-									retval = send(ptr2->sock, (char *)&g_chatmsg, BUFSIZE, 0);
-								}
-								else {
-									sprintf(g_chatmsg.buf, "%s : %s", ptr->name, tempBuf);
-									retval = send(ptr2->sock, (char *)&g_chatmsg, BUFSIZE, 0);
-								}
-								if (retval == SOCKET_ERROR) {
-									err_display("send()");
-									RemoveSocketInfo(j);
-									--j; // 루프 인덱스 보정
-									continue;
-								}
-							}
 						}
-						loginCheck = false;
-						showUsersCheck = false;
 					}
+					flagCheckInit();
+				}
 			}
 		}
 	}
@@ -301,3 +303,8 @@ void RemoveSocketInfo(int nIndex)
 	--nTotalSockets;
 }
 
+void flagCheckInit() {
+	loginCheck = false;
+	showUsersCheck = false;
+	oneTonOneCheck = false;
+}

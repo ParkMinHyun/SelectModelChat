@@ -46,6 +46,8 @@ static bool room1 = false;
 static bool room2 = false;
 static bool oneToOneCheck = false;
 char name[NAMESIZE];
+char oneToOneName[NAMESIZE];
+
 // 대화상자 프로시저
 BOOL CALLBACK DlgProc(HWND, UINT, WPARAM, LPARAM);
 // 소켓 통신 스레드 함수
@@ -234,13 +236,14 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case IDC_SENDMSG:
 			// 읽기 완료를 기다림
 			WaitForSingleObject(g_hReadEvent, INFINITE);
-			if (oneToOneCheck == false)
-				GetDlgItemText(hDlg, IDC_MSG, g_chatmsg.buf, MSGSIZE);
-			else {
-				sprintf(g_chatmsg.buf, "%s!$#@!",g_chatmsg.buf);
-				GetDlgItemText(hDlg, IDC_MSG, g_chatmsg.buf, MSGSIZE);
+			GetDlgItemText(hDlg, IDC_MSG, g_chatmsg.buf, MSGSIZE);
+			
+			// 귓속말일 경우 따로 표시해주기
+			if (oneToOneCheck == true){
+				GetDlgItemText(hDlg, IDC_ONETOONENAME, oneToOneName, NAMESIZE + 1);
+				sprintf(g_chatmsg.buf, "%s%s%s",g_chatmsg.buf,"!$#@!",);
 			}
-			// 쓰기 완료를 알림
+				// 쓰기 완료를 알림
 			SetEvent(g_hWriteEvent);
 			// 입력된 텍스트 전체를 선택 표시
 			SendMessage(hEditMsg, EM_SETSEL, 0, -1);
@@ -255,12 +258,10 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			return TRUE;
 
 		case IDC_ONETONECHECK:
-			if (oneToOneCheck == false) {
+			if (oneToOneCheck == false)
 				oneToOneCheck = true;
-			}
-			else {
+			else 
 				oneToOneCheck = false;
-			}
 			return TRUE;
 
 		case IDCANCEL:
