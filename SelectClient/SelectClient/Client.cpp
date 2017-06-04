@@ -66,6 +66,7 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 
 bool checkClassDIP(char *ip);
+bool checkPort(char inputPort[]);
 #pragma region EtcFunc
 // 에디트 컨트롤에 문자열 출력
 void DisplayText(char *fmt, ...)
@@ -220,6 +221,22 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			EnableWindow(hCheckIP, FALSE);       //주소 편집 컨트롤 비활성화
 			ipCheck = true;
 			return TRUE;
+
+		case IDC_PORTCHECK:
+			GetDlgItemText(hDlg, IDC_PORT, multicastPort, BUFSIZE + 1);
+			if (checkPort(multicastPort) == false)
+			{
+				MessageBox(hDlg, "올바른 Port번호만 입력하세요", "Port오류", MB_OK);
+				SetFocus(hEditPort);
+				return TRUE;
+			}
+			//235.7.8.10
+			EnableWindow(hCheckPort, FALSE); //포트 편집 버튼 비활성화
+			EnableWindow(hEditPort, FALSE);  //포트 편집 컨트롤 비활성화
+			portCheck = true;
+			return TRUE;
+
+
 		case IDC_ROOM1:
 			room1 = true;
 			room2 = false;
@@ -511,4 +528,13 @@ bool checkClassDIP(char *ip)
 		return false;
 	}
 	return false;
+}
+
+bool checkPort(char inputPort[]) {
+	int convertInputPort = atoi(inputPort);
+
+	if (convertInputPort >= 1024 && convertInputPort <= 65535)
+		return true;
+	else
+		return false;
 }
