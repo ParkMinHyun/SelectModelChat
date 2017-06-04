@@ -1,3 +1,6 @@
+// 2017년 1학기 네트워크프로그래밍 숙제 3번
+// 성명: 박민현 학번: 122179 
+
 #pragma comment(lib, "ws2_32")
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -202,6 +205,7 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		EnableWindow(g_hButtonSendMsg, FALSE);
 		EnableWindow(hShowUserBtn, FALSE);
 		SetDlgItemText(hDlg, IDC_IPADDR, SERVERIPV4);
+		SetDlgItemText(hDlg, IDC_ONETOONENAME, "귓속말 할 User를 입력하세요.");
 		SetDlgItemInt(hDlg, IDC_PORT, SERVERPORT, FALSE);
 
 		return TRUE;
