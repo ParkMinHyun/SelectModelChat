@@ -314,6 +314,7 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			SendMessage(hEditMsg, EM_SETSEL, 0, -1);
 			return TRUE;
 
+		// Show User 버튼을 클릭했을 때
 		case IDC_SHOWUSER:
 			// 읽기 완료를 기다림
 			WaitForSingleObject(g_hReadEvent, INFINITE);
@@ -322,6 +323,7 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			SetEvent(g_hWriteEvent);
 			return TRUE;
 
+		// 1:1 대화를 체크 했을 때
 		case IDC_ONETONECHECK:
 			if (oneToOneCheck == false)
 				oneToOneCheck = true;
@@ -358,7 +360,6 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	serveraddr.sin_port = htons(g_port);
 	retval = connect(g_sock, (SOCKADDR *)&serveraddr, sizeof(serveraddr));
 	if (retval == SOCKET_ERROR) err_quit("connect()");
-	//MessageBox(NULL, "서버에 접속했습니다.", "성공!", MB_ICONINFORMATION);
 
 	// 읽기 & 쓰기 스레드 생성
 	HANDLE hThread[2];
@@ -543,7 +544,6 @@ bool checkIP(char *ip)
 	}
 	return false;
 }
-
 bool checkPort(char inputPort[]) {
 	int convertInputPort = atoi(inputPort);
 
