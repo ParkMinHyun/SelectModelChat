@@ -224,7 +224,7 @@ int main(int argc, char *argv[])
 
 						// 접속자 보여달라 했을 경우
 						if (showUsersCheck == true) {
-							sprintf(g_chatmsg.buf, "%s %s", g_chatmsg.buf, ptr2->name);
+							sprintf(g_chatmsg.buf, "%s %s(방%d)", g_chatmsg.buf, ptr2->name, ptr2->room);
 							if (j == nTotalSockets - 1) {
 								retval = send(ptr->sock, (char *)&g_chatmsg, BUFSIZE, 0);
 							}

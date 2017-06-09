@@ -67,7 +67,7 @@ DWORD WINAPI WriteThread(LPVOID arg);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 
-bool checkClassDIP(char *ip);
+bool checkIP(char *ip);
 bool checkPort(char inputPort[]);
 #pragma region EtcFunc
 // 에디트 컨트롤에 문자열 출력
@@ -215,7 +215,7 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		case IDC_IPCHECK:
 			GetDlgItemText(hDlg, IDC_IPADDR, multicastIP, BUFSIZE + 1);
-			if (checkClassDIP(multicastIP) == false)
+			if (checkIP(multicastIP) == false)
 			{
 				MessageBox(hDlg, "올바른 IP만 입력할 수 있습니다", "IP오류", MB_OK);
 				SetFocus(hCheckIP);
@@ -475,7 +475,7 @@ DWORD WINAPI WriteThread(LPVOID arg)
 	return 0;
 }
 
-bool checkClassDIP(char *ip)
+bool checkIP(char *ip)
 {
 	// 공백 예외처리
 	if (strcmp(ip, " ") == 0)
