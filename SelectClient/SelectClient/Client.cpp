@@ -234,7 +234,6 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				SetFocus(hEditPort);
 				return TRUE;
 			}
-			//235.7.8.10
 			EnableWindow(hCheckPort, FALSE); //포트 편집 버튼 비활성화
 			EnableWindow(hEditPort, FALSE);  //포트 편집 컨트롤 비활성화
 			portCheck = true;
@@ -331,12 +330,12 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			return TRUE;
 
 		case IDCANCEL:
-			/*if (MessageBox(hDlg, "정말로 종료하시겠습니까?",
+			if (MessageBox(hDlg, "정말로 종료하시겠습니까?",
 				"질문", MB_YESNO | MB_ICONQUESTION) == IDYES)
 			{
 				closesocket(g_sock);
 				EndDialog(hDlg, IDCANCEL);
-			}*/
+			}
 			closesocket(g_sock);
 			EndDialog(hDlg, IDCANCEL);
 			return TRUE;
