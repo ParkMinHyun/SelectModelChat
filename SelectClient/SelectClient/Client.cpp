@@ -330,12 +330,6 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			return TRUE;
 
 		case IDCANCEL:
-			if (MessageBox(hDlg, "정말로 종료하시겠습니까?",
-				"질문", MB_YESNO | MB_ICONQUESTION) == IDYES)
-			{
-				closesocket(g_sock);
-				EndDialog(hDlg, IDCANCEL);
-			}
 			closesocket(g_sock);
 			EndDialog(hDlg, IDCANCEL);
 			return TRUE;

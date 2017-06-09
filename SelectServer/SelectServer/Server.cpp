@@ -40,6 +40,8 @@ struct SOCKETINFO
 
 bool loginCheck = false;
 bool showUsersCheck = false;
+bool room1PrintFlag = false;
+bool room2PrintFlag = false;
 int nTotalSockets = 0;
 int userID;
 static CHAT_MSG      g_chatmsg; // 채팅 메시지 저장
@@ -49,7 +51,8 @@ SOCKETINFO *SocketInfoArray[FD_SETSIZE];
 BOOL AddSocketInfo(SOCKET sock);
 void RemoveSocketInfo(int nIndex);
 bool checkSameNameUser(SOCKETINFO *ptr, int retval);
-bool checkOneToOneUser(SOCKETINFO *ptr, char *msg, char *name, int retval);
+bool checkOneToOneUser(SOCKETINFO *ptr, char *msg, char *name, int retval); 
+void PrintUsers(SOCKETINFO *ptr, SOCKETINFO *ptr2, char *room2UserBuf, int j);
 void flagCheckInit();
 
 #pragma region ErrorFunc
@@ -149,6 +152,7 @@ int main(int argc, char *argv[])
 		}
 
 		char tempBuf[BUFSIZE + 1];
+		char room2UserBuf[BUFSIZE + 1] = { NULL };				// 사용자 출력할 때 방2에 있는 사용자는 나중에 보여주기 위해 임시 저장하는 Buf
 		char *splitBuf[2] = { NULL };
 		char *oneToOneSplitBuf[2] = { NULL };
 
@@ -224,10 +228,7 @@ int main(int argc, char *argv[])
 
 						// 접속자 보여달라 했을 경우
 						if (showUsersCheck == true) {
-							sprintf(g_chatmsg.buf, "%s %s(방%d)", g_chatmsg.buf, ptr2->name, ptr2->room);
-							if (j == nTotalSockets - 1) {
-								retval = send(ptr->sock, (char *)&g_chatmsg, BUFSIZE, 0);
-							}
+							PrintUsers(ptr,ptr2,room2UserBuf,j);
 							continue;
 						}
 
@@ -326,6 +327,31 @@ bool checkSameNameUser(SOCKETINFO *ptr, int retval) {
 	return false;
 }
 
+void PrintUsers(SOCKETINFO *ptr, SOCKETINFO *ptr2, char *room2UserBuf, int j) {
+	int retval;
+
+	// 방 1일 경우
+	if (ptr2->room == 1) {
+		if (room1PrintFlag == false) {
+			sprintf(g_chatmsg.buf, "%s %s: ",g_chatmsg.buf, "room1" );
+			room1PrintFlag = true;
+		}
+		sprintf(g_chatmsg.buf, "%s %s", g_chatmsg.buf, ptr2->name);
+	}
+	// 방 2일 경우
+	else if (ptr2->room == 2) {
+		if (room2PrintFlag == false) {
+			sprintf(g_chatmsg.buf, "%s %s: ",g_chatmsg.buf, "room2");
+			room2PrintFlag = true;
+		}
+		sprintf(room2UserBuf, "%s %s", room2UserBuf, ptr2->name);
+	}
+	if (j == nTotalSockets - 1) {
+		sprintf(g_chatmsg.buf, "%s %s", g_chatmsg.buf, room2UserBuf);
+		retval = send(ptr->sock, (char *)&g_chatmsg, BUFSIZE, 0);
+	}
+}
+
 bool checkOneToOneUser(SOCKETINFO *ptr, char *msg, char *name, int retval) {
 	// 받은 바이트 수 리셋
 	ptr->recvbytes = 0;
@@ -346,4 +372,6 @@ bool checkOneToOneUser(SOCKETINFO *ptr, char *msg, char *name, int retval) {
 void flagCheckInit() {
 	loginCheck = false;
 	showUsersCheck = false;
+	room1PrintFlag = false;
+	room2PrintFlag = false;
 }
