@@ -197,6 +197,7 @@ int main(int argc, char *argv[])
 
 				// 1:1 대화일 경우
 				else if (ptr->buf[tempBufSize - 2] == '!' && ptr->buf[tempBufSize - 1] == '^') {
+					// @로 문자 나누기
 					char *splitChar = strtok(tempBuf, "@");
 					for (int i = 0; i < 2; i++) {
 						oneToOneSplitBuf[i] = splitChar;
