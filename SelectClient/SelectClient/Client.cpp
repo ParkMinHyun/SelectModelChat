@@ -354,6 +354,10 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			// Show User 버튼을 클릭했을 때
 		case IDC_SHOWUSER:
+			if (connectCheck == false) {
+				return TRUE;
+			}
+
 			// 읽기 완료를 기다림
 			WaitForSingleObject(g_hReadEvent, INFINITE);
 			sprintf(g_chatmsg.buf, "#!ShowUser");

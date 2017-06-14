@@ -52,7 +52,6 @@ BOOL AddSocketInfo(SOCKET sock);
 void RemoveSocketInfo(int nIndex);
 bool checkSameNameUser(SOCKETINFO *ptr, int retval);
 bool checkOneToOneUser(SOCKETINFO *ptr, char *msg, char *name, int retval); 
-void PrintUsers(SOCKETINFO *ptr, SOCKETINFO *ptr2, char *room2UserBuf, int j);
 void flagCheckInit();
 
 #pragma region ErrorFunc
@@ -230,7 +229,10 @@ int main(int argc, char *argv[])
 
 						// 立加磊 焊咯崔扼 沁阑 版快
 						if (showUsersCheck == true) {
-							PrintUsers(ptr,ptr2,room2UserBuf,j);
+							sprintf(g_chatmsg.buf, "%s %s(规%d)", g_chatmsg.buf, ptr2->name, ptr2->room);
+							if (j == nTotalSockets - 1) {
+								retval = send(ptr->sock, (char *)&g_chatmsg, BUFSIZE, 0);
+							}
 							continue;
 						}
 
@@ -327,31 +329,6 @@ bool checkSameNameUser(SOCKETINFO *ptr, int retval) {
 		}
 	}
 	return false;
-}
-
-void PrintUsers(SOCKETINFO *ptr, SOCKETINFO *ptr2, char *room2UserBuf, int j) {
-	int retval;
-
-	// 规 1老 版快
-	if (ptr2->room == 1) {
-		if (room1PrintFlag == false) {
-			sprintf(g_chatmsg.buf, "%s %s: ",g_chatmsg.buf, "room1" );
-			room1PrintFlag = true;
-		}
-		sprintf(g_chatmsg.buf, "%s %s", g_chatmsg.buf, ptr2->name);
-	}
-	// 规 2老 版快
-	else if (ptr2->room == 2) {
-		if (room2PrintFlag == false) {
-			sprintf(g_chatmsg.buf, "%s %s: ",g_chatmsg.buf, "room2");
-			room2PrintFlag = true;
-		}
-		sprintf(room2UserBuf, "%s %s", room2UserBuf, ptr2->name);
-	}
-	if (j == nTotalSockets - 1) {
-		sprintf(g_chatmsg.buf, "%s %s", g_chatmsg.buf, room2UserBuf);
-		retval = send(ptr->sock, (char *)&g_chatmsg, BUFSIZE, 0);
-	}
 }
 
 bool checkOneToOneUser(SOCKETINFO *ptr, char *msg, char *name, int retval) {
