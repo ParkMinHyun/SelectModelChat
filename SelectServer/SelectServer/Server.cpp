@@ -50,7 +50,7 @@ SOCKETINFO *SocketInfoArray[FD_SETSIZE];
 // 소켓 관리 함수
 BOOL AddSocketInfo(SOCKET sock);
 void RemoveSocketInfo(int nIndex);
-bool checkSameNameUser(SOCKETINFO *ptr, int retval);
+bool checkSameNameUser(SOCKETINFO *ptr, int retval,int index);
 bool checkOneToOneUser(SOCKETINFO *ptr, char *msg, char *name, int retval); 
 void flagCheckInit();
 
@@ -241,7 +241,7 @@ int main(int argc, char *argv[])
 							// Client가 처음 채팅방에 접속한 경우
 							if (loginCheck == true) {
 								// 같은 이름의 사용자 있는지 체크
-								if (checkSameNameUser(ptr, retval)) {
+								if (checkSameNameUser(ptr, retval,i)) {
 									break;
 								}
 								sprintf(g_chatmsg.buf, "닉네임 %s님이 채팅방%d에 %s", ptr->name, ptr->room, "접속하셨습니다!");
@@ -318,13 +318,13 @@ void RemoveSocketInfo(int nIndex)
 	--nTotalSockets;
 }
 
-bool checkSameNameUser(SOCKETINFO *ptr, int retval) {
+bool checkSameNameUser(SOCKETINFO *ptr, int retval, int index) {
 	for (int i = 0; i < nTotalSockets; i++) {
 		SOCKETINFO *ptr3 = SocketInfoArray[i];
 		if (!strcmp(ptr3->name, ptr->name) && ptr3->room == ptr->room && ptr3->ID != ptr->ID) {
 			sprintf(g_chatmsg.buf, "같은 이름의 접속자가 있습니다. 닉네임을 바꿔주세요", g_chatmsg.buf, ptr3->name);
 			retval = send(ptr->sock, (char *)&g_chatmsg, BUFSIZE, 0);
-			RemoveSocketInfo(nTotalSockets - 1);
+			RemoveSocketInfo(index);
 			return true;
 		}
 	}

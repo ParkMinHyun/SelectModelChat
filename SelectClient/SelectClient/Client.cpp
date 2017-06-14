@@ -470,22 +470,11 @@ DWORD WINAPI ReadThread(LPVOID arg)
 			chat_msg = (CHAT_MSG *)&comm_msg;
 			DisplayText("%s\r\n", chat_msg->buf);
 		}
-/*
-		char loginMSG[BUFSIZE] = { NULL };
-		sprintf(loginMSG, "닉네임 %s님이 채팅방%d에 접속하셨습니다!", name);
-		if (!strcmp(chat_msg->buf, loginMSG)) {
-			connectCheck = false;
-		}
-		if (!strcmp(chat_msg->buf, "같은 이름의 접속자가 있습니다. 닉네임을 바꿔주세요")) {
-			connectCheck = false;
-			EnableWindow(hButtonConnect, TRUE);
-		}*/
 	}
 
 	if (!strcmp(chat_msg->buf, "같은 이름의 접속자가 있습니다. 닉네임을 바꿔주세요")) {
 		connectCheck = false;
 		EnableWindow(hButtonConnect, TRUE);
-
 	}
 	return 0;
 }
