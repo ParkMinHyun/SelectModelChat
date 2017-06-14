@@ -193,6 +193,7 @@ int main(int argc, char *argv[])
 						ptr->room = 2;
 
 					strcpy(ptr->name, splitBuf[1]);
+					loginCheck = true;
 				}
 
 				// 1:1 대화일 경우

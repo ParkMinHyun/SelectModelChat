@@ -56,6 +56,7 @@ char oneToOneName[NAMESIZE];
 
 bool ipCheck = false;
 bool portCheck = false;
+bool connectCheck = false;
 
 // 대화상자 프로시저
 BOOL CALLBACK DlgProc(HWND, UINT, WPARAM, LPARAM);
@@ -241,13 +242,51 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 		case IDC_ROOM1:
-			room1 = true;
-			room2 = false;
+			if (connectCheck == false) {
+				room1 = true;
+				room2 = false;
+			}
+			else {
+				GetDlgItemText(hDlg, IDC_Name, name, NAMESIZE + 1);
+				if (strlen(name) == 0) {
+					MessageBox(hDlg, "NickName을 설정하세요", "접속 불가", MB_OK);
+					return TRUE;
+				}
+				room1 = true;
+				room2 = false;
+				WaitForSingleObject(g_hReadEvent, INFINITE);
+				char loginStatusSend[BUFSIZE];
+
+				strcpy(loginStatusSend, "1@");
+				strcat(loginStatusSend, name);
+				sprintf(g_chatmsg.buf, loginStatusSend);
+				// 쓰기 완료를 알림
+				SetEvent(g_hWriteEvent);
+			}
 			return TRUE;
 
 		case IDC_ROOM2:
-			room1 = false;
-			room2 = true;
+			if (connectCheck == false) {
+				room1 = false;
+				room2 = true;
+			}
+			else {
+				GetDlgItemText(hDlg, IDC_Name, name, NAMESIZE + 1);
+				if (strlen(name) == 0) {
+					MessageBox(hDlg, "NickName을 설정하세요", "접속 불가", MB_OK);
+					return TRUE;
+				}
+				room1 = false;
+				room2 = true;
+				WaitForSingleObject(g_hReadEvent, INFINITE);
+				char loginStatusSend[BUFSIZE];
+
+				strcpy(loginStatusSend, "2@");
+				strcat(loginStatusSend, name);
+				sprintf(g_chatmsg.buf, loginStatusSend);
+				// 쓰기 완료를 알림
+				SetEvent(g_hWriteEvent);
+			}
 			return TRUE;
 
 		case IDC_CONNECT:
@@ -286,10 +325,9 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				EndDialog(hDlg, 0);
 			}
 			else {
+				connectCheck = true;
 				EnableWindow(hButtonConnect, FALSE);
 				while (g_bStart == FALSE); // 서버 접속 성공 기다림
-				EnableWindow(hRoom1RadioBtn, FALSE);
-				EnableWindow(hRoom2RadioBtn, FALSE);
 				EnableWindow(hEditIPaddr, FALSE);
 				EnableWindow(hEditPort, FALSE);
 				EnableWindow(g_hButtonSendMsg, TRUE);
@@ -314,7 +352,7 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			SendMessage(hEditMsg, EM_SETSEL, 0, -1);
 			return TRUE;
 
-		// Show User 버튼을 클릭했을 때
+			// Show User 버튼을 클릭했을 때
 		case IDC_SHOWUSER:
 			// 읽기 완료를 기다림
 			WaitForSingleObject(g_hReadEvent, INFINITE);
@@ -323,7 +361,7 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			SetEvent(g_hWriteEvent);
 			return TRUE;
 
-		// 1:1 대화를 체크 했을 때
+			// 1:1 대화를 체크 했을 때
 		case IDC_ONETONECHECK:
 			if (oneToOneCheck == false)
 				oneToOneCheck = true;
@@ -428,11 +466,23 @@ DWORD WINAPI ReadThread(LPVOID arg)
 			chat_msg = (CHAT_MSG *)&comm_msg;
 			DisplayText("%s\r\n", chat_msg->buf);
 		}
+/*
+		char loginMSG[BUFSIZE] = { NULL };
+		sprintf(loginMSG, "닉네임 %s님이 채팅방%d에 접속하셨습니다!", name);
+		if (!strcmp(chat_msg->buf, loginMSG)) {
+			connectCheck = false;
+		}
+		if (!strcmp(chat_msg->buf, "같은 이름의 접속자가 있습니다. 닉네임을 바꿔주세요")) {
+			connectCheck = false;
+			EnableWindow(hButtonConnect, TRUE);
+		}*/
 	}
 
-	if (!strcmp(chat_msg->buf, "같은 이름의 접속자가 있습니다. 닉네임을 바꿔주세요"))
+	if (!strcmp(chat_msg->buf, "같은 이름의 접속자가 있습니다. 닉네임을 바꿔주세요")) {
+		connectCheck = false;
 		EnableWindow(hButtonConnect, TRUE);
 
+	}
 	return 0;
 }
 
